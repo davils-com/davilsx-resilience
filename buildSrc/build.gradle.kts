@@ -4,6 +4,8 @@ plugins {
 
 repositories {
     mavenCentral()
+    google()
+    gradlePluginPortal()
 }
 
 kotlin {
@@ -11,4 +13,8 @@ kotlin {
     compilerOptions {
         allWarningsAsErrors = true
     }
+}
+
+dependencies {
+    implementation(libs.bundles.build.src)
 }

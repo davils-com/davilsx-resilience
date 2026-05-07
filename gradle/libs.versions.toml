@@ -1,0 +1,30 @@
+[versions]
+# plugins
+kotlin = "2.3.21"
+kreate = "1.2.3"
+kotest = "6.1.11"
+ksp = "2.3.7"
+publish = "0.36.0"
+detekt = "2.0.0-alpha.3"
+android = "9.1.1"
+
+[libraries]
+# actual plugins, but needed as dependencies in buildSrc
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kreate-gradle-plugin = { module = "com.davils.kreate:com.davils.kreate.gradle.plugin", version.ref = "kreate" }
+kotest-gradle-plugin = { module = "io.kotest:io.kotest.gradle.plugin", version.ref = "kotest" }
+ksp-gradle-plugin = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+publish-gradle-plugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "publish" }
+detekt-gradle-plugin = { module = "dev.detekt:dev.detekt.gradle.plugin", version.ref = "detekt" }
+android-kotlin-library = { module = "com.android.kotlin.multiplatform.library:com.android.kotlin.multiplatform.library.gradle.plugin", version.ref = "android" }
+
+[bundles]
+build-src = [
+    "kotlin-gradle-plugin",
+    "kreate-gradle-plugin",
+    "kotest-gradle-plugin",
+    "ksp-gradle-plugin",
+    "android-kotlin-library",
+    "publish-gradle-plugin",
+    "detekt-gradle-plugin"
+]
