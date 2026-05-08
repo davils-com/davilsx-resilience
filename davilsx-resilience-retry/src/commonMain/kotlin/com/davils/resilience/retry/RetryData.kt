@@ -22,6 +22,14 @@ public data class RetryData(
     val maxRetries: Int,
 
     /**
+     * If true, the retry will fail after the maximum number of retries.
+     * If false, the retry will continue indefinitely until a successful result is obtained.
+     *
+     * @since 1.0.0
+     */
+    val failAfterMaxRetries: Boolean,
+
+    /**
      * The strategy used to calculate the delay between retry attempts.
      *
      * @since 1.0.0

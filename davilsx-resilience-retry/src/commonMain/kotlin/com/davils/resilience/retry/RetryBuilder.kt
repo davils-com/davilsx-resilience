@@ -91,7 +91,8 @@ public class RetryBuilder internal constructor() {
         return RetryData(
             maxRetries = maxRetries,
             backoffStrategy = backoffStrategy,
-            predicate = predicate
+            predicate = predicate,
+            failAfterMaxRetries = failAfterMaxRetries
         )
     }
 }
