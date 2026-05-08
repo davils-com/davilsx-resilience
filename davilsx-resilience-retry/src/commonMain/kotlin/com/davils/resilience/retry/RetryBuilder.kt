@@ -7,7 +7,7 @@ import com.davils.resilience.retry.strategy.BackoffStrategy
 import com.davils.resilience.retry.strategy.constant.constantBackoff
 
 /**
- * A builder class for configuring and creating [Retry] instances.
+ * A builder class for configuring and creating `Retry` instances.
  *
  * This builder provides a DSL-friendly way to define retry policies, including
  * the maximum number of attempts, backoff strategies, and retry conditions.
