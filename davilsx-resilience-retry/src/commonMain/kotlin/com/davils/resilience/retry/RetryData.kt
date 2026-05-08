@@ -11,7 +11,8 @@ import com.davils.resilience.retry.strategy.BackoffStrategy
  *
  * @since 1.0.0
  */
-public data class RetryData(
+@ConsistentCopyVisibility
+public data class RetryData internal constructor(
     /**
      * The maximum number of attempts allowed, including the initial call.
      *

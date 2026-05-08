@@ -26,7 +26,7 @@ public class RetryBuilder internal constructor() {
      */
     public var maxAttempts: Int = 3
         set(value) {
-            require(value >= 1) { "maxRetries must be at least 1" }
+            require(value >= 1) { "maxAttempts must be at least 1" }
             field = value
         }
 
@@ -76,11 +76,11 @@ public class RetryBuilder internal constructor() {
     /**
      * Sets the maximum number of retry attempts.
      *
-     * @param maxRetries The maximum number of retries. Must be non-negative.
+     * @param maxAttempts The maximum number of retries. Must be non-negative.
      * @since 1.0.0
      */
-    public fun maxRetries(maxRetries: Int) {
-        this.maxAttempts = maxRetries
+    public fun maxAttempts(maxAttempts: Int) {
+        this.maxAttempts = maxAttempts
     }
 
     /**
