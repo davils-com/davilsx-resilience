@@ -41,5 +41,17 @@ public data class RetryData(
      *
      * @since 1.0.0
      */
-    val predicate: Predicate
+    val predicate: Predicate,
+
+    /**
+     * The behavior applied when a result-based retry exhausts [maxAttempts] while
+     * [failAfterMaxRetries] is true.
+     *
+     * Defaults to [OnResultExhaustion.THROW] so that silent acceptance of values previously
+     * rejected by the predicate cannot mask real failures. This setting has no effect on
+     * exception-based exhaustion, which always rethrows the last caught [Throwable].
+     *
+     * @since 1.0.0
+     */
+    val onResultExhaustion: OnResultExhaustion = OnResultExhaustion.THROW
 )
