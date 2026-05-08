@@ -1,10 +1,7 @@
 package com.davils.resilience.retry
 
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 
 /**

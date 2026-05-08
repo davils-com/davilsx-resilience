@@ -10,10 +10,6 @@ import kotlin.time.Duration
  * intentionally free of any I/O, blocking, or suspending operations, so they can be safely reused
  * by both blocking and coroutine-based executors.
  *
- * All helpers are stateless with respect to the provider instance: each invocation of an `execute`
- * function on a concrete [Retry] or [RetryAsync] runs on its own local state, which guarantees
- * thread safety even when the same provider instance is shared between threads.
- *
  * @since 1.0.0
  */
 public interface RetryProvider {
