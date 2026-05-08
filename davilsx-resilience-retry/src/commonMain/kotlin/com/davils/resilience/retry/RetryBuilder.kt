@@ -63,13 +63,13 @@ public class RetryBuilder internal constructor() {
      *
      * Defaults to [OnResultExhaustion.THROW] so that values previously rejected by the configured
      * [predicate] do not silently leak back to the caller as if they had been accepted. Set this
-     * to [OnResultExhaustion.RETURN_LAST] to restore the pre-1.2.0 behavior of returning the last
+     * to [OnResultExhaustion.RETURN_LAST] to restore the pre-1.0.0 behavior of returning the last
      * observed value.
      *
      * This setting has no effect on exception-based exhaustion: the last caught [Throwable] is
      * always rethrown.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public var onResultExhaustion: OnResultExhaustion = OnResultExhaustion.THROW
 
