@@ -30,30 +30,40 @@ public class RetryAsync(override val data: RetryData) : RetryProvider {
      * is never retried and is always rethrown immediately. Before each retry, the coroutine
      * context is also checked for cancellation.
      *
-     * If [RetryData.failAfterMaxRetries] is true and all attempts are exhausted, the last
-     * caught exception is rethrown. If it is false, the loop continues until [block] returns
-     * successfully.
+     * If [RetryData.failAfterMaxRetries] is true and all attempts are exhausted by an exception,
+     * the last caught exception is rethrown. If all attempts are exhausted by a result-based retry,
+     * the behavior is controlled by [RetryData.onResultExhaustion]: either a
+     * [MaxRetriesExceededException] is thrown or the last observed value is returned to the caller.
+     * If [RetryData.failAfterMaxRetries] is false, the loop continues until [block] returns a value
+     * that the predicate accepts.
      *
      * @param T The type of the value produced by [block].
      * @param block The suspending operation to execute.
-     * @return The value produced by the first successful invocation of [block].
+     * @return The value produced by an invocation of [block] that is accepted by the configured
+     * predicate, or the last observed value when [RetryData.onResultExhaustion] is
+     * [OnResultExhaustion.RETURN_LAST] and result-based retries are exhausted.
      * @throws Throwable The last exception thrown by [block] when retries are exhausted and
      * [RetryData.failAfterMaxRetries] is true, or any non-retryable exception thrown by [block].
+     * @throws MaxRetriesExceededException When result-based retries are exhausted,
+     * [RetryData.failAfterMaxRetries] is true and [RetryData.onResultExhaustion] is
+     * [OnResultExhaustion.THROW].
      * @since 1.0.0
      */
     public suspend fun <T> execute(block: suspend () -> T): T {
         var attempt = 1
         while (true) {
+            val result: T
             try {
-                return block()
+                result = block()
+                if (!shouldRetryOnResult(attempt, result)) return result
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
                 if (!shouldRetry(attempt, throwable)) throw throwable
-                val waitDuration = nextDelay(attempt)
-                delay(waitDuration.coerceAtLeast(Duration.ZERO))
-                attempt++
             }
+
+            delay(nextDelay(attempt))
+            attempt++
         }
     }
 }
@@ -65,9 +75,4 @@ public class RetryAsync(override val data: RetryData) : RetryProvider {
  * @return A fully configured, immutable [RetryAsync] instance.
  * @since 1.0.0
  */
-public fun retryAsync(builder: RetryBuilder.() -> Unit): RetryAsync {
-    val retryBuilder = RetryBuilder()
-    retryBuilder.builder()
-    val data = retryBuilder.build()
-    return RetryAsync(data)
-}
+public fun retryAsync(builder: RetryBuilder.() -> Unit): RetryAsync = RetryAsync(RetryBuilder().apply(builder).build())
