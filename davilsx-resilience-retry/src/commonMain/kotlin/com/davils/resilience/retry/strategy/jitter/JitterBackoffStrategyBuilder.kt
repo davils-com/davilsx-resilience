@@ -2,7 +2,6 @@ package com.davils.resilience.retry.strategy.jitter
 
 import com.davils.kore.annotation.KoreDsl
 import com.davils.resilience.retry.strategy.BackoffStrategy
-import com.davils.resilience.retry.strategy.constant.constantBackoff
 
 /**
  * A builder class for creating instances of [JitterBackoffStrategyData].

@@ -1,6 +1,5 @@
 package com.davils.resilience.retry.strategy.jitter
 
-import com.davils.kore.annotation.KoreDsl
 import com.davils.resilience.retry.strategy.BackoffStrategy
 
 /**

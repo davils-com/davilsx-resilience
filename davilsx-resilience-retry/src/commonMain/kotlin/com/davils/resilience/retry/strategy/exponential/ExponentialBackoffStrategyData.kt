@@ -1,7 +1,6 @@
 package com.davils.resilience.retry.strategy.exponential
 
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Data class containing the configuration for an exponential backoff strategy.
