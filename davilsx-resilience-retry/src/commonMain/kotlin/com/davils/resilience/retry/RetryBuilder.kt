@@ -31,6 +31,15 @@ public class RetryBuilder internal constructor() {
         }
 
     /**
+     * If true, the retry will fail after the maximum number of retries.
+     * If false, the retry will continue indefinitely until a successful result is obtained.
+     *
+     * Defaults to true.
+     * @since 1.0.0
+     */
+    public var failAfterMaxRetries: Boolean = true
+
+    /**
      * The strategy used to determine the delay between retry attempts.
      *
      * Defaults to a constant backoff of 1000ms.
