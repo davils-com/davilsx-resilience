@@ -2,7 +2,6 @@ package com.davils.resilience.retry
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
-import kotlin.time.Duration
 
 /**
  * Coroutine-based, thread-safe retry executor.
