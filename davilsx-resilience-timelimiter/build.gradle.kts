@@ -16,4 +16,31 @@ kotlin {
     android {
         namespace = "com.davils.resilience.timelimiter"
     }
+
+    sourceSets {
+        androidHostTest {
+            dependencies {
+                implementation(libs.bundles.resilience.tests.common.impl)
+                implementation(libs.bundles.resilience.tests.jvm.impl)
+            }
+        }
+
+        commonMain {
+            dependencies {
+                implementation(libs.bundles.resilience.shared.impl)
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(libs.bundles.resilience.tests.common.impl)
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation(libs.bundles.resilience.tests.jvm.impl)
+            }
+        }
+    }
 }
