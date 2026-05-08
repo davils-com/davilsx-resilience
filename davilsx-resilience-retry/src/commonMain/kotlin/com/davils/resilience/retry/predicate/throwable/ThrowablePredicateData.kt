@@ -16,5 +16,19 @@ public data class ThrowablePredicateData internal constructor(
      *
      * @since 1.0.0
      */
-    val throwables: MutableList<KClass<out Throwable>>
+    val throwables: MutableList<KClass<out Throwable>>,
+
+    /**
+     * The list of exception types that should be ignored and not trigger a retry.
+     *
+     * @since 1.0.0
+     */
+    val ignoreThrowables: MutableList<KClass<out Throwable>>,
+
+    /**
+     * Indicates whether all exceptions should be retried.
+     *
+     * @since 1.0.0
+     */
+    val retryOnAll: Boolean
 )

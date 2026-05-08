@@ -18,9 +18,11 @@ public class ThrowablePredicate internal constructor(private val data: Throwable
      * @return true if the throwable matches any of the configured types, false otherwise.
      * @since 1.0.0
      */
-    override fun shouldRetry(throwable: Throwable?): Boolean {
-        if (throwable == null) return false
-        return data.throwables.any { it.isInstance(throwable) }
+    override fun shouldRetry(throwable: Throwable?): Boolean = when {
+        throwable == null -> false
+        data.ignoreThrowables.any { it.isInstance(throwable) } -> false
+        data.retryOnAll -> true
+        else -> data.throwables.any { it.isInstance(throwable) }
     }
 }
 
