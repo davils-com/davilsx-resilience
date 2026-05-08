@@ -8,11 +8,20 @@ publish = "0.36.0"
 detekt = "2.0.0-alpha.3"
 android = "9.1.1"
 
+# kotlin
+coroutines = "1.10.2"
+atomicfu = "0.32.1"
+
 # davils
 kore = "1.0.0"
 
 [libraries]
 davilsx-kore = { module = "com.davils:davilsx-kore", version.ref = "kore" }
+
+# coroutines
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+
+kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 
 kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
@@ -40,7 +49,9 @@ build-src = [
 ]
 
 resilience-shared-impl = [
-    "davilsx-kore"
+    "davilsx-kore",
+    "kotlinx-coroutines-core",
+    "kotlinx-atomicfu"
 ]
 
 resilience-tests-common-impl = [
