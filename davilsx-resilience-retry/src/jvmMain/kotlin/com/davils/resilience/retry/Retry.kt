@@ -1,8 +1,5 @@
 package com.davils.resilience.retry
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-
 /**
  * Synchronous, thread-safe retry executor.
  *
