@@ -44,7 +44,7 @@ public class Retry(override val data: RetryData) : RetryProvider {
                 if (!shouldRetry(attempt, throwable)) throw throwable
                 val waitDuration = nextDelay(attempt)
                 if (waitDuration.isPositive()) {
-                    runBlocking { delay(waitDuration) }
+                    Thread.sleep(waitDuration.inWholeMilliseconds)
                 }
                 attempt++
             }

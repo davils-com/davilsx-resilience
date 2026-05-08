@@ -13,13 +13,13 @@ import com.davils.resilience.retry.strategy.BackoffStrategy
  */
 public data class RetryData(
     /**
-     * The maximum number of retry attempts allowed.
+     * The maximum number of attempts allowed, including the initial call.
      *
-     * A value of 0 means no retries will be attempted (only the initial call).
+     * A value of 1 means the operation is executed once without any retry.
      *
      * @since 1.0.0
      */
-    val maxRetries: Int,
+    val maxAttempts: Int,
 
     /**
      * If true, the retry will fail after the maximum number of retries.

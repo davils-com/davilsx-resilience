@@ -24,7 +24,7 @@ public interface RetryProvider {
      * Determines whether another retry attempt should be performed for the given failure.
      *
      * The decision is based on the configured [RetryData.predicate], the configured
-     * [RetryData.maxRetries] and the [RetryData.failAfterMaxRetries] flag.
+     * [RetryData.maxAttempts] and the [RetryData.failAfterMaxRetries] flag.
      *
      * @param attempt The number of attempts already performed, starting from 1 for the initial call.
      * @param throwable The exception thrown by the last attempt. Must not be null.
@@ -33,7 +33,7 @@ public interface RetryProvider {
      */
     public fun shouldRetry(attempt: Int, throwable: Throwable): Boolean {
         if (!data.predicate.shouldRetry(throwable)) return false
-        if (attempt > data.maxRetries && data.failAfterMaxRetries) return false
+        if (attempt >= data.maxAttempts && data.failAfterMaxRetries) return false
         return true
     }
 

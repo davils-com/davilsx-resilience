@@ -17,16 +17,16 @@ import com.davils.resilience.retry.strategy.constant.constantBackoff
 @KoreDsl
 public class RetryBuilder internal constructor() {
     /**
-     * The maximum number of retry attempts to perform.
+     * The maximum number of attempts to perform, including the initial call.
      *
-     * Defaults to 3. Must be non-negative. A value of 0 means no retries will
-     * be attempted after the initial failure.
+     * Defaults to 3. Must be at least 1 because the block is always executed
+     * once.
      *
      * @since 1.0.0
      */
-    public var maxRetries: Int = 3
+    public var maxAttempts: Int = 3
         set(value) {
-            require(value >= 0) { "maxRetries must be non-negative" }
+            require(value >= 1) { "maxRetries must be at least 1" }
             field = value
         }
 
@@ -64,7 +64,7 @@ public class RetryBuilder internal constructor() {
      * @since 1.0.0
      */
     public fun maxRetries(maxRetries: Int) {
-        this.maxRetries = maxRetries
+        this.maxAttempts = maxRetries
     }
 
     /**
@@ -89,7 +89,7 @@ public class RetryBuilder internal constructor() {
 
     internal fun build(): RetryData {
         return RetryData(
-            maxRetries = maxRetries,
+            maxAttempts = maxAttempts,
             backoffStrategy = backoffStrategy,
             predicate = predicate,
             failAfterMaxRetries = failAfterMaxRetries
