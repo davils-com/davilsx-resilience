@@ -18,7 +18,7 @@ public class ThrowablePredicateBuilder internal constructor() {
      *
      * @since 1.0.0
      */
-    public var throwables: MutableList<KClass<out Throwable>> = mutableListOf()
+    public var throwables: List<KClass<out Throwable>> = mutableListOf()
 
     /**
      * The list of [Throwable] classes to be ignored.
@@ -28,7 +28,7 @@ public class ThrowablePredicateBuilder internal constructor() {
      *
      * @since 1.0.0
      */
-    public var ignoreThrowables: MutableList<KClass<out Throwable>> = mutableListOf()
+    public var ignoreThrowables: List<KClass<out Throwable>> = mutableListOf()
 
     /**
      * Flag indicating whether all exceptions should trigger a retry attempt.
@@ -41,13 +41,24 @@ public class ThrowablePredicateBuilder internal constructor() {
     public var retryOnAll: Boolean = false
 
     /**
+     * Flag indicating whether the cause chain of an evaluated exception should be inspected.
+     *
+     * When true, both the retry list and the ignore list are matched against
+     * the exception itself and every exception reachable via [Throwable.cause].
+     * Defaults to false to preserve historical behavior.
+     *
+     * @since 1.0.0
+     */
+    public var includeCauseChain: Boolean = false
+
+    /**
      * Adds a single [Throwable] class to the retry list.
      *
      * @param throwable The exception class to add.
      * @since 1.0.0
      */
     public fun throwable(throwable: KClass<out Throwable>) {
-        this.throwables.add(throwable)
+        this.throwables += throwable
     }
 
     /**
@@ -57,7 +68,7 @@ public class ThrowablePredicateBuilder internal constructor() {
      * @since 1.0.0
      */
     public fun throwables(vararg throwable: KClass<out Throwable>) {
-        this.throwables.addAll(throwable)
+        this.throwables += throwable
     }
 
     /**
@@ -67,7 +78,7 @@ public class ThrowablePredicateBuilder internal constructor() {
      * @since 1.0.0
      */
     public fun throwables(throwables: Iterable<KClass<out Throwable>>) {
-        this.throwables.addAll(throwables)
+        this.throwables += throwables
     }
 
     /**
@@ -77,7 +88,7 @@ public class ThrowablePredicateBuilder internal constructor() {
      * @since 1.0.0
      */
     public fun ignore(throwable: KClass<out Throwable>) {
-        this.ignoreThrowables.add(throwable)
+        this.ignoreThrowables += throwable
     }
 
     /**
@@ -87,7 +98,7 @@ public class ThrowablePredicateBuilder internal constructor() {
      * @since 1.0.0
      */
     public fun ignore(vararg throwable: KClass<out Throwable>) {
-        this.ignoreThrowables.addAll(throwable)
+        this.ignoreThrowables += throwable
     }
 
     /**
@@ -97,7 +108,7 @@ public class ThrowablePredicateBuilder internal constructor() {
      * @since 1.0.0
      */
     public fun ignore(throwables: Iterable<KClass<out Throwable>>) {
-        this.ignoreThrowables.addAll(throwables)
+        this.ignoreThrowables += throwables
     }
 
     /**
@@ -112,5 +123,18 @@ public class ThrowablePredicateBuilder internal constructor() {
         retryOnAll = true
     }
 
-    internal fun build() = ThrowablePredicateData(throwables, ignoreThrowables, retryOnAll)
+    /**
+     * Enables matching against the cause chain of evaluated exceptions.
+     *
+     * When invoked, [includeCauseChain] is set to true so that the resulting
+     * predicate inspects every exception reachable via [Throwable.cause] when
+     * deciding whether to retry or to ignore.
+     *
+     * @since 1.0.0
+     */
+    public fun causeChain() {
+        includeCauseChain = true
+    }
+
+    internal fun build() = ThrowablePredicateData(throwables, ignoreThrowables, retryOnAll, includeCauseChain)
 }
