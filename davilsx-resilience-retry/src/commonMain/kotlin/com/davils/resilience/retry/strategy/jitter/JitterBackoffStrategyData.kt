@@ -35,7 +35,7 @@ public data class JitterBackoffStrategyData internal constructor(
      *
      * @since 1.0.0
      */
-    val mode: JitterMode,
+    val mode: JitterMode = JitterMode.PROPORTIONAL,
 
     /**
      * The upper bound applied to the jittered delay.
@@ -47,5 +47,5 @@ public data class JitterBackoffStrategyData internal constructor(
      *
      * @since 1.0.0
      */
-    val cap: Duration
+    val cap: Duration = Duration.INFINITE
 )
