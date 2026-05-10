@@ -11,20 +11,19 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 
-@Suppress("UNCHECKED_CAST")
-public class TimeLimiterAsync(override val data: TimeLimiterData) : TimeLimiterProvider {
+public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLimiterProvider<T> {
     private val detachedScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    public suspend fun <T> execute(block: suspend () -> T): T {
+    public suspend fun execute(block: suspend () -> T): T? {
         if (data.timeout == Duration.ZERO) return block()
 
         return when (data.strategy) {
             TimeoutStrategy.HARD -> executeHard(block)
             TimeoutStrategy.SOFT -> executeSoft(block)
-        } as T
+        }
     }
 
-    private suspend fun <T> executeHard(block: suspend () -> T): Any? {
+    private suspend fun executeHard(block: suspend () -> T): T? {
         try {
             return withTimeout(data.timeout.inWholeMilliseconds.milliseconds) {
                 block()
@@ -35,7 +34,7 @@ public class TimeLimiterAsync(override val data: TimeLimiterData) : TimeLimiterP
         }
     }
 
-    private suspend fun <T> executeSoft(block: suspend () -> T): Any? {
+    private suspend fun executeSoft(block: suspend () -> T): T? {
         val deferred = detachedScope.async {
             block()
         }
@@ -53,7 +52,7 @@ public class TimeLimiterAsync(override val data: TimeLimiterData) : TimeLimiterP
         }
     }
 
-    private suspend fun handleFallbackOrThrow(exception: Throwable): Any? {
+    private suspend fun handleFallbackOrThrow(exception: Throwable): T? {
         val fallback = data.fallback
         return if (fallback != null) {
             try {
@@ -67,4 +66,4 @@ public class TimeLimiterAsync(override val data: TimeLimiterData) : TimeLimiterP
     }
 }
 
-public fun timeLimiter(builder: TimeLimiterBuilder.() -> Unit): TimeLimiterAsync = TimeLimiterAsync(TimeLimiterBuilder().apply(builder).build())
+public fun <T> timeLimiter(builder: TimeLimiterBuilder<T>.() -> Unit): TimeLimiterAsync<T> = TimeLimiterAsync<T>(TimeLimiterBuilder<T>().apply(builder).build())
