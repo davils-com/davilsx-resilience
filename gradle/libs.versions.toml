@@ -9,7 +9,7 @@ detekt = "2.0.0-alpha.3"
 android = "9.1.1"
 
 # kotlin
-coroutines = "1.10.2"
+coroutines = "1.11.0"
 atomicfu = "0.32.1"
 
 # davils
