@@ -13,7 +13,7 @@ coroutines = "1.10.2"
 atomicfu = "0.32.1"
 
 # davils
-kore = "1.0.0"
+kore = "1.0.1"
 
 [libraries]
 davilsx-kore = { module = "com.davils:davilsx-kore", version.ref = "kore" }
