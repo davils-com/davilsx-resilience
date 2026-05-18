@@ -3,26 +3,29 @@
 kotlin = "2.3.21"
 kreate = "1.2.3"
 kotest = "6.1.11"
-ksp = "2.3.7"
+ksp = "2.3.8"
 publish = "0.36.0"
 detekt = "2.0.0-alpha.3"
 android = "9.1.1"
 
 # kotlin
-coroutines = "1.10.2"
+coroutines = "1.11.0"
 atomicfu = "0.32.1"
 
 # davils
-kore = "1.0.0"
+kore = "1.0.1"
 
 [libraries]
+# davils
 davilsx-kore = { module = "com.davils:davilsx-kore", version.ref = "kore" }
 
 # coroutines
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 
+# atomicfu
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 
+# kotest
 kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
