@@ -62,6 +62,6 @@ public class ThrowablePredicate internal constructor(private val data: Throwable
 public fun throwablePredicate(builder: ThrowablePredicateBuilder.() -> Unit): ThrowablePredicate {
     val throwableBuilder = ThrowablePredicateBuilder()
     throwableBuilder.builder()
-    val data = throwableBuilder.build()
+    val data = throwableBuilder.produce()
     return ThrowablePredicate(data)
 }
