@@ -1,6 +1,7 @@
 package com.davils.resilience.retry.predicate.result
 
 import com.davils.kore.annotation.KoreDsl
+import com.davils.kore.pattern.dsl.validation.DslValidator
 
 /**
  * A builder class for creating instances of [ResultPredicateData].
@@ -16,7 +17,7 @@ import com.davils.kore.annotation.KoreDsl
  * @since 1.0.0
  */
 @KoreDsl
-public class ResultPredicateBuilder<T> internal constructor() {
+public class ResultPredicateBuilder<T> internal constructor() : DslValidator<ResultPredicateData<T>>() {
     private var condition: (T) -> Boolean = { false }
 
     /**
@@ -44,5 +45,5 @@ public class ResultPredicateBuilder<T> internal constructor() {
         this.condition = condition
     }
 
-    internal fun build(): ResultPredicateData<T> = ResultPredicateData(condition, retryOnNull)
+    override fun data(): ResultPredicateData<T> = ResultPredicateData(condition, retryOnNull)
 }

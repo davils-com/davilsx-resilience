@@ -1,6 +1,23 @@
+/*
+ * Copyright 2026 Davils
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.davils.resilience.retry
 
 import com.davils.kore.annotation.KoreDsl
+import com.davils.kore.pattern.dsl.validation.DslValidator
 import com.davils.resilience.retry.predicate.Predicate
 import com.davils.resilience.retry.predicate.alwaysRetryOnThrowablePredicate
 import com.davils.resilience.retry.strategy.BackoffStrategy
@@ -15,7 +32,7 @@ import com.davils.resilience.retry.strategy.constant.constantBackoff
  * @since 1.0.0
  */
 @KoreDsl
-public class RetryBuilder internal constructor() {
+public class RetryBuilder internal constructor() : DslValidator<RetryData>() {
     /**
      * The maximum number of attempts to perform, including the initial call.
      *
@@ -25,10 +42,6 @@ public class RetryBuilder internal constructor() {
      * @since 1.0.0
      */
     public var maxAttempts: Int = 3
-        set(value) {
-            require(value >= 1) { "maxAttempts must be at least 1" }
-            field = value
-        }
 
     /**
      * If true, the retry will fail after the maximum number of retries.
@@ -103,13 +116,11 @@ public class RetryBuilder internal constructor() {
         this.predicate = predicate
     }
 
-    internal fun build(): RetryData {
-        return RetryData(
-            maxAttempts = maxAttempts,
-            backoffStrategy = backoffStrategy,
-            predicate = predicate,
-            failAfterMaxRetries = failAfterMaxRetries,
-            onResultExhaustion = onResultExhaustion
-        )
-    }
+    override fun data(): RetryData = RetryData(
+        maxAttempts = maxAttempts,
+        backoffStrategy = backoffStrategy,
+        predicate = predicate,
+        failAfterMaxRetries = failAfterMaxRetries,
+        onResultExhaustion = onResultExhaustion
+    )
 }

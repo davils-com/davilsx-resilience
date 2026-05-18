@@ -1,6 +1,7 @@
 package com.davils.resilience.retry.strategy.constant
 
 import com.davils.kore.annotation.KoreDsl
+import com.davils.kore.pattern.dsl.validation.DslValidator
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -13,7 +14,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * @since 1.0.0
  */
 @KoreDsl
-public class ConstantBackoffStrategyBuilder internal constructor(){
+public class ConstantBackoffStrategyBuilder internal constructor() : DslValidator<ConstantBackoffStrategyData>() {
     /**
      * The fixed delay duration between retry attempts.
      *
@@ -22,10 +23,6 @@ public class ConstantBackoffStrategyBuilder internal constructor(){
      * @since 1.0.0
      */
     public var delay: Duration = 1000.milliseconds
-        set(value) {
-            require(!value.isNegative()) { "delay must be non-negative" }
-            field = value
-        }
 
     /**
      * Sets the fixed delay duration between retry attempts.
@@ -47,5 +44,5 @@ public class ConstantBackoffStrategyBuilder internal constructor(){
         this.delay = delayMillis.milliseconds
     }
 
-    internal fun build() = ConstantBackoffStrategyData(delay)
+    override fun data(): ConstantBackoffStrategyData = ConstantBackoffStrategyData(delay)
 }

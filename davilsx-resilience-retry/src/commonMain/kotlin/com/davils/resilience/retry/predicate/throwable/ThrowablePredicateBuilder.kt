@@ -1,6 +1,7 @@
 package com.davils.resilience.retry.predicate.throwable
 
 import com.davils.kore.annotation.KoreDsl
+import com.davils.kore.pattern.dsl.validation.DslValidator
 import kotlin.reflect.KClass
 
 /**
@@ -12,7 +13,7 @@ import kotlin.reflect.KClass
  * @since 1.0.0
  */
 @KoreDsl
-public class ThrowablePredicateBuilder internal constructor() {
+public class ThrowablePredicateBuilder internal constructor() : DslValidator<ThrowablePredicateData>() {
     /**
      * The list of [Throwable] classes to be used for matching.
      *
@@ -136,5 +137,10 @@ public class ThrowablePredicateBuilder internal constructor() {
         includeCauseChain = true
     }
 
-    internal fun build() = ThrowablePredicateData(throwables, ignoreThrowables, retryOnAll, includeCauseChain)
+    override fun data(): ThrowablePredicateData = ThrowablePredicateData(
+        throwables,
+        ignoreThrowables,
+        retryOnAll,
+        includeCauseChain
+    )
 }

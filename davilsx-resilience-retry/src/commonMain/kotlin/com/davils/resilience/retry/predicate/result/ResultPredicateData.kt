@@ -1,5 +1,9 @@
 package com.davils.resilience.retry.predicate.result
 
+import com.davils.kore.pattern.dsl.verification.DslVerifiableData
+import com.davils.kore.pattern.dsl.verification.DslVerification
+import com.davils.kore.pattern.dsl.verification.verifyDsl
+
 /**
  * Data class containing the configuration for a result-based retry predicate.
  *
@@ -31,4 +35,8 @@ public data class ResultPredicateData<T> internal constructor(
      * @since 1.0.0
      */
     val retryOnNull: Boolean
-)
+) : DslVerifiableData {
+    override fun validate(): DslVerification = verifyDsl {
+        // No validation rules currently, but this is a placeholder for future checks.
+    }
+}

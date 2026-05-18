@@ -72,5 +72,6 @@ public class ResultPredicate<T> internal constructor(private val data: ResultPre
 public fun <T> resultPredicate(builder: ResultPredicateBuilder<T>.() -> Unit): ResultPredicate<T> {
     val resultBuilder = ResultPredicateBuilder<T>()
     resultBuilder.builder()
-    return ResultPredicate(resultBuilder.build())
+    val data = resultBuilder.produce()
+    return ResultPredicate(data)
 }

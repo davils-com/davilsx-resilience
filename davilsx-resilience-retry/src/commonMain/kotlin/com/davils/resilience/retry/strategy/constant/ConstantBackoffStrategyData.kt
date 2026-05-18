@@ -1,5 +1,8 @@
 package com.davils.resilience.retry.strategy.constant
 
+import com.davils.kore.pattern.dsl.verification.DslVerifiableData
+import com.davils.kore.pattern.dsl.verification.DslVerification
+import com.davils.kore.pattern.dsl.verification.verifyDsl
 import kotlin.time.Duration
 
 /**
@@ -17,4 +20,10 @@ public data class ConstantBackoffStrategyData internal constructor(
      * @since 1.0.0
      */
     val delay: Duration
-)
+) : DslVerifiableData {
+    override fun validate(): DslVerification = verifyDsl {
+        if (delay.isNegative()) {
+            fail("delay must be non-negative", "delay")
+        }
+    }
+}

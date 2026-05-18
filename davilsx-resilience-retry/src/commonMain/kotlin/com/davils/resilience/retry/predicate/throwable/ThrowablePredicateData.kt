@@ -1,5 +1,8 @@
 package com.davils.resilience.retry.predicate.throwable
 
+import com.davils.kore.pattern.dsl.verification.DslVerifiableData
+import com.davils.kore.pattern.dsl.verification.DslVerification
+import com.davils.kore.pattern.dsl.verification.verifyDsl
 import kotlin.reflect.KClass
 
 /**
@@ -43,7 +46,17 @@ public data class ThrowablePredicateData internal constructor(
      *
      * Defaults to false to preserve the historical strict matching behavior.
      *
-     * @since1.0.0
+     * @since 1.0.0
      */
     val includeCauseChain: Boolean = false
-)
+) : DslVerifiableData {
+    override fun validate(): DslVerification = verifyDsl {
+        if (throwables.isEmpty()) {
+            fail("At least one throwable type must be specified", "throwables")
+        }
+
+        if (retryOnAll && throwables.size > 1) {
+            fail("retryOnAll is true, but multiple throwable types are specified", "throwables")
+        }
+    }
+}

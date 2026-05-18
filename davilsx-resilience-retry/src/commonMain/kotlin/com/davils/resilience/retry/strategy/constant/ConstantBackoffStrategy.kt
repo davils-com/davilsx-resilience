@@ -36,6 +36,6 @@ public class ConstantBackoffStrategy internal constructor(private val data: Cons
 public fun constantBackoff(builder: ConstantBackoffStrategyBuilder.() -> Unit = {}): BackoffStrategy {
     val constantBuilder = ConstantBackoffStrategyBuilder()
     constantBuilder.builder()
-    val data = constantBuilder.build()
+    val data = constantBuilder.produce()
     return ConstantBackoffStrategy(data)
 }

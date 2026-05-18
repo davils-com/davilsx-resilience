@@ -1,6 +1,7 @@
 package com.davils.resilience.retry.strategy.jitter
 
 import com.davils.kore.annotation.KoreDsl
+import com.davils.kore.pattern.dsl.validation.DslValidator
 import com.davils.resilience.retry.strategy.BackoffStrategy
 import kotlin.time.Duration
 
@@ -13,7 +14,9 @@ import kotlin.time.Duration
  * @since 1.0.0
  */
 @KoreDsl
-public class JitterBackoffStrategyBuilder internal constructor(private val backoffStrategy: BackoffStrategy) {
+public class JitterBackoffStrategyBuilder internal constructor(
+    private val backoffStrategy: BackoffStrategy
+) : DslValidator<JitterBackoffStrategyData>() {
     /**
      * The jitter factor to apply to the base backoff delay.
      *
@@ -27,10 +30,6 @@ public class JitterBackoffStrategyBuilder internal constructor(private val backo
      * @since 1.0.0
      */
     public var factor: Double = 0.5
-        set(value) {
-            require(value > 0.0 && value <= 1.0) { "factor must be between 0.0 (exclusive) and 1.0" }
-            field = value
-        }
 
     /**
      * The jitter algorithm to apply.
@@ -52,10 +51,6 @@ public class JitterBackoffStrategyBuilder internal constructor(private val backo
      * @since 1.0.0
      */
     public var cap: Duration = Duration.INFINITE
-        set(value) {
-            require(value > Duration.ZERO) { "cap must be strictly positive" }
-            field = value
-        }
 
     /**
      * Sets the jitter factor to apply.
@@ -87,12 +82,10 @@ public class JitterBackoffStrategyBuilder internal constructor(private val backo
         this.cap = cap
     }
 
-    internal fun build(): JitterBackoffStrategyData {
-        return JitterBackoffStrategyData(
-            backoffStrategy = backoffStrategy,
-            factor = factor,
-            mode = mode,
-            cap = cap
-        )
-    }
+    override fun data(): JitterBackoffStrategyData = JitterBackoffStrategyData(
+        backoffStrategy = backoffStrategy,
+        factor = factor,
+        mode = mode,
+        cap = cap
+    )
 }

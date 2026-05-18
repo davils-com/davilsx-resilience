@@ -104,7 +104,7 @@ public fun jitterBackoff(
 ): BackoffStrategy {
     val jitterBuilder = JitterBackoffStrategyBuilder(backoffStrategy = backoffStrategy)
     jitterBuilder.builder()
-    val data = jitterBuilder.build()
+    val data = jitterBuilder.produce()
     return JitterBackoffStrategy(data)
 }
 

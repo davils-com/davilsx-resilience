@@ -67,4 +67,9 @@ public class Retry(override val data: RetryData) : RetryProvider {
  * @return A fully configured, immutable [Retry] instance.
  * @since 1.0.0
  */
-public fun retry(builder: RetryBuilder.() -> Unit): Retry = Retry(RetryBuilder().apply(builder).build())
+public fun retry(builder: RetryBuilder.() -> Unit): Retry {
+    val retryBuilder = RetryBuilder()
+    retryBuilder.builder()
+    val data = retryBuilder.produce()
+    return Retry(data)
+}

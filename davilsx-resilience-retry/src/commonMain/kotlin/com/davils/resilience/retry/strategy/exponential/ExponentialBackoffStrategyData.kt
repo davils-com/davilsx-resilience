@@ -1,5 +1,8 @@
 package com.davils.resilience.retry.strategy.exponential
 
+import com.davils.kore.pattern.dsl.verification.DslVerifiableData
+import com.davils.kore.pattern.dsl.verification.DslVerification
+import com.davils.kore.pattern.dsl.verification.verifyDsl
 import kotlin.time.Duration
 
 /**
@@ -31,4 +34,22 @@ public data class ExponentialBackoffStrategyData internal constructor(
      * @since 1.0.0
      */
     public val initialDelay: Duration
-)
+) : DslVerifiableData {
+    override fun validate(): DslVerification = verifyDsl {
+        if (maxDelay.isNegative()) {
+            fail("maxDelay must be non-negative", "maxDelay")
+        }
+
+        if (multiplier > 0.0) {
+            fail("multiplier must be greater than 0.0", "multiplier")
+        }
+
+        if (initialDelay.isNegative()) {
+            fail("initialDelay must be non-negative", "initialDelay")
+        }
+
+        if (initialDelay > maxDelay) {
+            fail("initialDelay must be less than or equal to maxDelay", "initialDelay")
+        }
+    }
+}

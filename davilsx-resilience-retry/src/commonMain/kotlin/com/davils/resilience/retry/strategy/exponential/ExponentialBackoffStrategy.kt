@@ -45,6 +45,6 @@ public class ExponentialBackoffStrategy internal constructor(
 public fun exponentialBackoff(builder: ExponentialBackoffStrategyBuilder.() -> Unit = {}): BackoffStrategy {
     val exponentialBuilder = ExponentialBackoffStrategyBuilder()
     exponentialBuilder.builder()
-    val data = exponentialBuilder.build()
+    val data = exponentialBuilder.produce()
     return ExponentialBackoffStrategy(data)
 }

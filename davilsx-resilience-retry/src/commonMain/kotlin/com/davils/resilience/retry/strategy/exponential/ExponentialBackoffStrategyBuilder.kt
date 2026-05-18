@@ -1,6 +1,7 @@
 package com.davils.resilience.retry.strategy.exponential
 
 import com.davils.kore.annotation.KoreDsl
+import com.davils.kore.pattern.dsl.validation.DslValidator
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -13,7 +14,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * @since 1.0.0
  */
 @KoreDsl
-public class ExponentialBackoffStrategyBuilder internal constructor() {
+public class ExponentialBackoffStrategyBuilder internal constructor() : DslValidator<ExponentialBackoffStrategyData>() {
     /**
      * The maximum duration to wait between retry attempts.
      *
@@ -22,10 +23,6 @@ public class ExponentialBackoffStrategyBuilder internal constructor() {
      * @since 1.0.0
      */
     public var maxDelay: Duration = 60000.milliseconds
-        set(value) {
-            require(!value.isNegative()) { "maxDelay must be non-negative" }
-            field = value
-        }
 
     /**
      * The factor by which the delay increases with each attempt.
@@ -35,10 +32,6 @@ public class ExponentialBackoffStrategyBuilder internal constructor() {
      * @since 1.0.0
      */
     public var multiplier: Double = 2.0
-        set(value) {
-            require(value > 0) { "multiplier must be greater than 0" }
-            field = value
-        }
 
     /**
      * The initial duration to wait before the first retry attempt.
@@ -48,10 +41,6 @@ public class ExponentialBackoffStrategyBuilder internal constructor() {
      * @since 1.0.0
      */
     public var initialDelay: Duration = 1000.milliseconds
-        set(value) {
-            require(!value.isNegative()) { "initialDelay must be non-negative" }
-            field = value
-        }
 
     /**
      * Sets the maximum duration to wait between retry attempts.
@@ -103,7 +92,7 @@ public class ExponentialBackoffStrategyBuilder internal constructor() {
         this.initialDelay = initialDelayMillis.milliseconds
     }
 
-    internal fun build() = ExponentialBackoffStrategyData(
+    override fun data(): ExponentialBackoffStrategyData = ExponentialBackoffStrategyData(
         maxDelay = maxDelay,
         multiplier = multiplier,
         initialDelay = initialDelay

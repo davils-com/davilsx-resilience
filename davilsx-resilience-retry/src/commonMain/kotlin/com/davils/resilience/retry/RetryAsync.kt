@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Davils
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.davils.resilience.retry
 
 import kotlinx.coroutines.CancellationException
@@ -74,4 +90,9 @@ public class RetryAsync(override val data: RetryData) : RetryProvider {
  * @return A fully configured, immutable [RetryAsync] instance.
  * @since 1.0.0
  */
-public fun retryAsync(builder: RetryBuilder.() -> Unit): RetryAsync = RetryAsync(RetryBuilder().apply(builder).build())
+public fun retryAsync(builder: RetryBuilder.() -> Unit): RetryAsync {
+    val retryBuilder = RetryBuilder()
+    retryBuilder.builder()
+    val data = retryBuilder.produce()
+    return RetryAsync(data)
+}

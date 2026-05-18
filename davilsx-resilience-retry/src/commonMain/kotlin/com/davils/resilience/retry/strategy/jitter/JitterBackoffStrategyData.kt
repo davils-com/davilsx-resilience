@@ -1,5 +1,8 @@
 package com.davils.resilience.retry.strategy.jitter
 
+import com.davils.kore.pattern.dsl.verification.DslVerifiableData
+import com.davils.kore.pattern.dsl.verification.DslVerification
+import com.davils.kore.pattern.dsl.verification.verifyDsl
 import com.davils.resilience.retry.strategy.BackoffStrategy
 import kotlin.time.Duration
 
@@ -35,7 +38,7 @@ public data class JitterBackoffStrategyData internal constructor(
      *
      * @since 1.0.0
      */
-    val mode: JitterMode = JitterMode.PROPORTIONAL,
+    val mode: JitterMode,
 
     /**
      * The upper bound applied to the jittered delay.
@@ -47,5 +50,15 @@ public data class JitterBackoffStrategyData internal constructor(
      *
      * @since 1.0.0
      */
-    val cap: Duration = Duration.INFINITE
-)
+    val cap: Duration
+) : DslVerifiableData {
+    override fun validate(): DslVerification = verifyDsl {
+        if (factor > 0.0 && factor <= 1.0) {
+            fail("factor must be greater than 0.0 and less than or equal to 1.0", "factor")
+        }
+
+        if (cap.isNegative()) {
+            fail("cap must be non-negative", "cap")
+        }
+    }
+}
