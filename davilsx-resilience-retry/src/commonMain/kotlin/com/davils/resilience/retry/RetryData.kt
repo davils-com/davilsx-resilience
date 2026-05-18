@@ -75,6 +75,12 @@ public data class RetryData internal constructor(
      * @since 1.0.0
      */
     val onResultExhaustion: OnResultExhaustion,
+
+    /**
+     * Event data for retry events emitted by the retry operation.
+     *
+     * @since 1.0.0
+     */
     val eventData: RetryEventData
 ) : DslVerifiableData {
     override fun validate(): DslVerification = verifyDsl {

@@ -86,8 +86,10 @@ public class CompositePredicate internal constructor(
  * combinator for mixing throwable-based and result-based predicates inside
  * a single retry instance.
  *
- * @param predicates The delegate predicates that participate in the composition. May be empty, in which case the composite never opts in.
- * @return A [Predicate] that returns true whenever at least one delegate predicate returns true for the same input.
+ * @param predicates The delegate predicates that participate in the composition. May be empty, in which
+ * case the composite never opts in.
+ * @return A [Predicate] that returns true whenever at least one delegate predicate
+ * returns true for the same input.
  * @since 1.0.0
  */
 public fun anyOf(vararg predicates: Predicate): Predicate =
@@ -101,7 +103,8 @@ public fun anyOf(vararg predicates: Predicate): Predicate =
  * result) under [CombineMode.ALL] is rarely meaningful and should be done
  * deliberately, because each delegate ignores inputs outside its domain.
  *
- * @param predicates The delegate predicates that participate in the composition. An empty list yields a predicate that always opts in, mirroring standard `all { }` semantics.
+ * @param predicates The delegate predicates that participate in the composition. An empty list yields
+ * a predicate that always opts in, mirroring standard `all { }` semantics.
  * @return A [Predicate] that returns true only when every delegate predicate returns true for the same input.
  * @since 1.0.0
  */
@@ -118,7 +121,7 @@ public fun allOf(vararg predicates: Predicate): Predicate =
  * @return A composite [Predicate] using [CombineMode.ANY] semantics across the two operands.
  * @since 1.0.0
  */
-public fun Predicate.or(other: Predicate): Predicate = anyOf(this, other)
+public infix fun Predicate.or(other: Predicate): Predicate = anyOf(this, other)
 
 /**
  * Returns a [Predicate] that opts in only when both the receiver and [other] opt in.
@@ -130,4 +133,4 @@ public fun Predicate.or(other: Predicate): Predicate = anyOf(this, other)
  * @return A composite [Predicate] using [CombineMode.ALL] semantics across the two operands.
  * @since 1.0.0
  */
-public fun Predicate.and(other: Predicate): Predicate = allOf(this, other)
+public infix fun Predicate.and(other: Predicate): Predicate = allOf(this, other)
