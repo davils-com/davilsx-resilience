@@ -54,13 +54,13 @@ class ThrowablePredicateBuilderTest : FunSpec({
             test("builds ThrowablePredicateData with configured throwables") {
                 val builder = ThrowablePredicateBuilder()
                 builder.throwable(RuntimeException::class)
-                val data = builder.build()
+                val data = builder.produce()
                 data.throwables shouldContain RuntimeException::class
             }
 
             test("builds ThrowablePredicateData with empty list when no throwables added") {
                 val builder = ThrowablePredicateBuilder()
-                val data = builder.build()
+                val data = builder.produce()
                 data.throwables.shouldBeEmpty()
             }
         }
