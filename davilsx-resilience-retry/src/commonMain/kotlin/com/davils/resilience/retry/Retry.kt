@@ -17,6 +17,7 @@
 package com.davils.resilience.retry
 
 import com.davils.kore.pattern.event.eventBus
+import com.davils.resilience.common.DisposableAsync
 import com.davils.resilience.retry.event.RetryEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -39,7 +40,7 @@ import kotlin.time.Duration
  * @property data The configuration data used by this retry instance.
  * @since 1.0.0
  */
-public class Retry internal constructor(public val data: RetryData) {
+public class Retry internal constructor(public val data: RetryData) : DisposableAsync {
     private var isDisposed = false
 
     private val mutex = Mutex()
@@ -109,7 +110,7 @@ public class Retry internal constructor(public val data: RetryData) {
      *
      * @since 1.0.0
      */
-    public suspend fun dispose() {
+    override suspend fun dispose() {
         mutex.withLock {
             if (isDisposed) return
             eventBus.push(RetryEvent.RetryDisposed)

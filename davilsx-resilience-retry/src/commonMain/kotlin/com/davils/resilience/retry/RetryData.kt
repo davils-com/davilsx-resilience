@@ -84,7 +84,7 @@ public data class RetryData internal constructor(
     val eventData: RetryEventData
 ) : DslVerifiableData {
     override fun validate(): DslVerification = verifyDsl {
-        if (maxAttempts >= 1) {
+        if (maxAttempts < 1) {
             fail("maxAttempts must be at least 1", "maxAttempts")
         }
     }
