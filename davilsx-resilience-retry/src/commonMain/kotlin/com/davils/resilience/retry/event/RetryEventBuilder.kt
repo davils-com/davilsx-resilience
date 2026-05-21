@@ -56,12 +56,12 @@ public class RetryEventBuilder internal constructor() : DslValidator<RetryEventD
     /**
      * The number of events to replay to new subscribers.
      *
-     * Defaults to 1, ensuring that the last emitted event is immediately
-     * available to any new listener.
+     * Defaults to 0. This value determines how many events to replay to new subscribers
+     * when they subscribe to the event bus.
      *
      * @since 1.0.0
      */
-    public var replay: Int = 1
+    public var replay: Int = 0
 
     /**
      * The additional buffer capacity for the event bus.
