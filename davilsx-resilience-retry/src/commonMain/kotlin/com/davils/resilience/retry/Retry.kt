@@ -38,10 +38,9 @@ import kotlin.time.Duration
  *
  * Instances of this class are thread-safe and can be reused for multiple executions.
  *
- * @property data The configuration data used by this retry instance.
  * @since 1.0.0
  */
-public class Retry internal constructor(public val data: RetryData) : DisposableAsync {
+public class Retry internal constructor(private val data: RetryData) : DisposableAsync {
     private val eventBus = eventBus<RetryEvent>(data.eventData.scope) {
         replay = data.eventData.replay
         onError = data.eventData.onError
