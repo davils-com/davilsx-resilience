@@ -56,7 +56,7 @@ public data class ExponentialBackoffStrategyData internal constructor(
             fail("maxDelay must be non-negative", "maxDelay")
         }
 
-        if (multiplier > 0.0) {
+        if (multiplier <= 0.0) {
             fail("multiplier must be greater than 0.0", "multiplier")
         }
 

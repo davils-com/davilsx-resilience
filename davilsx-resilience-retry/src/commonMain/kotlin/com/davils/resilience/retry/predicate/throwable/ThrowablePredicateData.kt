@@ -67,11 +67,11 @@ public data class ThrowablePredicateData internal constructor(
     val includeCauseChain: Boolean = false
 ) : DslVerifiableData {
     override fun validate(): DslVerification = verifyDsl {
-        if (throwables.isEmpty()) {
+        if (throwables.isEmpty() && !retryOnAll) {
             fail("At least one throwable type must be specified", "throwables")
         }
 
-        if (retryOnAll && throwables.size > 1) {
+        if (retryOnAll && throwables.isNotEmpty()) {
             fail("retryOnAll is true, but multiple throwable types are specified", "throwables")
         }
     }
