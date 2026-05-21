@@ -18,4 +18,31 @@ package com.davils.resilience.common.registry
 
 import com.davils.resilience.common.DisposableAsync
 
-public data class RegistryItem<T : DisposableAsync>(public val name: String, public val item: T)
+/**
+ * Represents an item stored in a [Registry].
+ *
+ * This data class pairs a unique name with an asynchronous disposable item.
+ * It is used for bulk operations and convenient item management within the registry.
+ *
+ * @param T The type of the item, which must implement [DisposableAsync].
+ * @since 1.0.0
+ */
+public data class RegistryItem<T : DisposableAsync>(
+    /**
+     * The unique name associated with the registry item.
+     *
+     * This name is used for lookups and must match the registry's name constraints.
+     *
+     * @since 1.0.0
+     */
+    public val name: String,
+
+    /**
+     * The actual item instance stored in the registry.
+     *
+     * The item implements [DisposableAsync] and will be disposed of when removed from the registry.
+     *
+     * @since 1.0.0
+     */
+    public val item: T
+)
