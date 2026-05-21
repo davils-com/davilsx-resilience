@@ -32,7 +32,7 @@ import kotlinx.coroutines.sync.withLock
  * @param T The type of items stored in the registry, which must implement [DisposableAsync].
  * @since 1.0.0
  */
-public abstract class Registry<T : DisposableAsync> {
+public abstract class Registry<T : DisposableAsync> : DisposableAsync {
     private val mutex = Mutex()
     private val registry = mutableMapOf<String, T>()
 
@@ -62,6 +62,10 @@ public abstract class Registry<T : DisposableAsync> {
 
     private fun validateName(name: String) {
         require(name.matches(NAME_REGEX)) { "Registry item name must match regex: $NAME_REGEX" }
+    }
+
+    override suspend fun dispose() {
+        clear()
     }
 
     /**
@@ -127,18 +131,13 @@ public abstract class Registry<T : DisposableAsync> {
      * @since 1.0.0
      */
     public suspend fun putAll(items: Map<String, T>) {
-        val entries = items.toList()
-        entries.forEach { (name, _) ->
-            validateName(name)
-        }
+        items.keys.forEach { validateName(it) }
 
         withLock { map ->
-            val existing = map.keys
-            if (entries.any { it.first in existing }) {
-                throw IllegalArgumentException("Items already exist")
+            if (items.keys.any { it in map }) {
+                throw IllegalArgumentException("Some items already exist in the registry")
             }
-
-            map.putAll(entries.toMap())
+            map.putAll(items)
         }
     }
 
