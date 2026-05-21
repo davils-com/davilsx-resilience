@@ -22,68 +22,66 @@ import kotlinx.coroutines.sync.withLock
 
 public abstract class Registry<T : DisposableAsync> {
     private val mutex = Mutex()
-
     private val registry = mutableMapOf<String, T>()
 
-    private suspend inline fun <R> withLock(block: (MutableMap<String, T>) -> R): R = mutex.withLock {
+    private suspend inline fun <R> withLock(
+        block: (MutableMap<String, T>) -> R
+    ): R = mutex.withLock {
         block(registry)
     }
 
-    public suspend fun put(name: String, item: T): Boolean {
-        require(name.matches(nameRegex)) { "Name must match $nameRegex" }
+    private fun putUnsafe(map: MutableMap<String, T>, name: String, item: T): Boolean {
+        if (map.containsKey(name)) return false
+        map[name] = item
+        return true
+    }
 
-        withLock { map ->
-            if (map.containsKey(name)) {
-                return false
-            }
-            map[name] = item
-            return true
+    private fun removeUnsafe(map: MutableMap<String, T>, name: String): T? {
+        return map.remove(name)
+    }
+
+    private fun lookupUnsafe(map: MutableMap<String, T>, name: String): T? {
+        return map[name]
+    }
+
+    private fun existsUnsafe(map: MutableMap<String, T>, name: String): Boolean {
+        return map.containsKey(name)
+    }
+
+    private fun validateName(name: String) {
+        require(name.matches(NAME_REGEX)) { "Registry item name must match regex: $NAME_REGEX" }
+    }
+
+    public suspend fun put(name: String, item: T): Boolean {
+        validateName(name)
+        return withLock { map ->
+            putUnsafe(map, name, item)
         }
     }
 
     public suspend fun put(item: RegistryItem<T>): Boolean = put(item.name, item.item)
 
-    public suspend fun putIfAbsent(name: String, item: T) {
-        require(name.matches(nameRegex)) { "Name must match $nameRegex" }
-
-        withLock { map ->
-            if (!map.containsKey(name)) {
-                map[name] = item
-            }
-        }
-    }
-
-    public suspend fun putIfAbsent(item: RegistryItem<T>) {
-        putIfAbsent(item.name, item.item)
-    }
-
-    public suspend fun putIf(name: String, item: T, condition: (T) -> Boolean): Boolean {
-        withLock { map ->
-            require(name.matches(nameRegex)) { "Name must match $nameRegex" }
-
-            if (map.containsKey(name)) {
-                return false
-            }
-
-            val conditionResult = condition.invoke(item)
-            if (!conditionResult) {
-                return false
-            }
-
-            map[name] = item
-            return true
+    public suspend fun putIf(name: String, item: T, condition: (name: String, item: T) -> Boolean): Boolean {
+        validateName(name)
+        return withLock { map ->
+            if (!condition(name, item)) return@withLock false
+            putUnsafe(map, name, item)
         }
     }
 
     public suspend fun putAll(items: Map<String, T>) {
-        withLock { map ->
-            require(items.all { it.key.matches(nameRegex) }) { "All names must match $nameRegex" }
+        val entries = items.toList()
+        entries.forEach { (name, _) ->
+            validateName(name)
+        }
 
-            val duplicateNames = items.keys.intersect(map.keys)
-            if (duplicateNames.isNotEmpty()) {
-                throw IllegalArgumentException("Items with names ${duplicateNames.joinToString(", ")} already exist in the registry")
+        withLock { map ->
+            val existing = map.keys
+            if (entries.any { it.first in existing }) {
+                throw IllegalArgumentException("Items already exist")
             }
-            map.putAll(items)
+
+            map.putAll(entries.toMap())
         }
     }
 
@@ -95,66 +93,39 @@ public abstract class Registry<T : DisposableAsync> {
         putAll(items.asIterable())
     }
 
-    public suspend fun putAll(items: Sequence<RegistryItem<T>>) {
-        putAll(items.asIterable())
-    }
-
     public suspend fun lookupOrNull(name: String): T? {
         return withLock { map ->
-            map[name]
+            lookupUnsafe(map, name)
         }
-    }
-
-    public suspend fun lookupOrNull(name: String, transform: suspend (T?) -> Unit): T? {
-        val lookup = lookupOrNull(name)
-        transform.invoke(lookup)
-        return lookup
     }
 
     public suspend fun lookup(name: String): T {
         return lookupOrNull(name) ?: throw IllegalArgumentException("No item with name $name found in the registry")
     }
 
-    public suspend fun lookup(name: String, transform: suspend (T) -> Unit): T {
-        val lookup = lookup(name)
-        transform.invoke(lookup)
-        return lookup
-    }
-
     public suspend fun exists(name: String): Boolean {
         return withLock { map ->
-            map.containsKey(name)
+            existsUnsafe(map, name)
         }
     }
 
     public suspend fun remove(name: String) {
         val removed = withLock { map ->
-            map.remove(name)
+            removeUnsafe(map, name)
         }
         removed?.dispose()
     }
 
     public suspend fun removeAll(names: Iterable<String>) {
         val removedItems = withLock { map ->
-            names.mapNotNull { name ->
-                map.remove(name)
-            }
+            names.mapNotNull { removeUnsafe(map, it) }
         }
-
-        removedItems.forEach { item ->
-            item.dispose()
-        }
-    }
-
-    public suspend fun removeAll(names: Sequence<String>) {
-        removeAll(names.asIterable())
+        removedItems.forEach { it.dispose() }
     }
 
     public suspend fun removeAll(vararg names: String) {
         removeAll(names.asIterable())
     }
-
-    // TODO: removeIf
 
     public suspend fun clear() {
         val removedItems = withLock { map ->
@@ -163,10 +134,23 @@ public abstract class Registry<T : DisposableAsync> {
             items
         }
 
-        removedItems.forEach { item ->
-            item.dispose()
-        }
+        removedItems.forEach { it.dispose() }
     }
+
+    public suspend fun removeIf(
+        name: String,
+        condition: (T) -> Boolean
+    ): Boolean {
+        val removed = withLock { map ->
+            val item = lookupUnsafe(map, name) ?: return@withLock null
+            if (!condition(item)) return@withLock null
+            removeUnsafe(map, name)
+        }
+
+        removed?.dispose()
+        return removed != null
+    }
+
 
     public suspend operator fun get(name: String): T {
         return lookupOrNull(name) ?: throw IllegalArgumentException("No item with name $name found in the registry")
@@ -185,6 +169,6 @@ public abstract class Registry<T : DisposableAsync> {
     }
 
     private companion object {
-        val nameRegex = Regex("^[a-z]+(-[a-z]+)*$")
+        val NAME_REGEX = Regex("^[a-z]+(-[a-z]+)*$")
     }
 }
