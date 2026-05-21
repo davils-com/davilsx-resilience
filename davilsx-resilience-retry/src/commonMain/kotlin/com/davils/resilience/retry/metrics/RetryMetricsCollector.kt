@@ -25,21 +25,38 @@ public class RetryMetricsCollector internal constructor(
     private val data: RetryMetricsCollectorData,
     private val eventBus: EventBus<RetryEvent>,
 ) {
-    private val _successfulCallsWithoutRetry: AtomicLong = atomic(0L)
-
-    public val successfulCallsWithoutRetry: Long get() = _successfulCallsWithoutRetry.value
+    private val successfulCallsWithoutRetry: AtomicLong = atomic(0L)
+    private val successfulCallsWithRetry: AtomicLong = atomic(0L)
+    private val failedCallsWithoutRetry: AtomicLong = atomic(0L)
+    private val failedCallsWithRetry: AtomicLong = atomic(0L)
 
     public fun collectMetrics() {
         if (!data.enabled) {
             return
         }
 
-        recordAttempt()
+        recordSuccessfulAttempts()
+        recordFailedAttempts()
     }
 
-    private fun recordAttempt() {
-        eventBus.subscribe<RetryEvent.RetryAttemptStarted> { _ ->
-            _successfulCallsWithoutRetry.incrementAndGet()
+    private fun recordSuccessfulAttempts() {
+        eventBus.subscribe<RetryEvent.RetrySucceeded> { event ->
+            if (event.attempt == 1) {
+                successfulCallsWithoutRetry.incrementAndGet()
+                return@subscribe
+            }
+
+            successfulCallsWithRetry.incrementAndGet()
+        }
+    }
+
+    private fun recordFailedAttempts() {
+        eventBus.subscribe<RetryEvent.RetryFailed> { event ->
+            if (event.attempt == 1) {
+                failedCallsWithoutRetry.incrementAndGet()
+                return@subscribe
+            }
+            failedCallsWithRetry.incrementAndGet()
         }
     }
 }
