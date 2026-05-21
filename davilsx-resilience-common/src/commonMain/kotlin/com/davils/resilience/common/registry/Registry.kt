@@ -21,8 +21,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 public abstract class Registry<T : DisposableAsync> {
-    private val nameRegex = Regex("^[a-z]+(-[a-z]+)*$")
-
     private val mutex = Mutex()
 
     private val registry = mutableMapOf<String, T>()
@@ -107,9 +105,9 @@ public abstract class Registry<T : DisposableAsync> {
         }
     }
 
-    public suspend fun lookupOrNull(name: String, resolver: suspend (T?) -> Unit): T? {
+    public suspend fun lookupOrNull(name: String, transform: suspend (T?) -> Unit): T? {
         val lookup = lookupOrNull(name)
-        resolver.invoke(lookup)
+        transform.invoke(lookup)
         return lookup
     }
 
@@ -117,9 +115,9 @@ public abstract class Registry<T : DisposableAsync> {
         return lookupOrNull(name) ?: throw IllegalArgumentException("No item with name $name found in the registry")
     }
 
-    public suspend fun lookup(name: String, resolver: suspend (T) -> Unit): T {
+    public suspend fun lookup(name: String, transform: suspend (T) -> Unit): T {
         val lookup = lookup(name)
-        resolver.invoke(lookup)
+        transform.invoke(lookup)
         return lookup
     }
 
@@ -130,18 +128,21 @@ public abstract class Registry<T : DisposableAsync> {
     }
 
     public suspend fun remove(name: String) {
-        withLock { map ->
-            map[name]?.dispose()
+        val removed = withLock { map ->
             map.remove(name)
         }
+        removed?.dispose()
     }
 
     public suspend fun removeAll(names: Iterable<String>) {
-        withLock { map ->
-            names.forEach { name ->
-                map[name]?.dispose()
+        val removedItems = withLock { map ->
+            names.mapNotNull { name ->
                 map.remove(name)
             }
+        }
+
+        removedItems.forEach { item ->
+            item.dispose()
         }
     }
 
@@ -156,9 +157,14 @@ public abstract class Registry<T : DisposableAsync> {
     // TODO: removeIf
 
     public suspend fun clear() {
-        withLock { map ->
-            map.values.forEach { it.dispose() }
+        val removedItems = withLock { map ->
+            val items = map.values.toList()
             map.clear()
+            items
+        }
+
+        removedItems.forEach { item ->
+            item.dispose()
         }
     }
 
@@ -176,5 +182,9 @@ public abstract class Registry<T : DisposableAsync> {
 
     public suspend operator fun String.unaryMinus() {
         remove(this)
+    }
+
+    private companion object {
+        val nameRegex = Regex("^[a-z]+(-[a-z]+)*$")
     }
 }
