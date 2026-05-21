@@ -19,6 +19,7 @@ package com.davils.resilience.retry
 import com.davils.kore.pattern.event.eventBus
 import com.davils.resilience.common.DisposableAsync
 import com.davils.resilience.retry.event.RetryEvent
+import com.davils.resilience.retry.metrics.RetryMetricsCollector
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -41,15 +42,40 @@ import kotlin.time.Duration
  * @since 1.0.0
  */
 public class Retry internal constructor(public val data: RetryData) : DisposableAsync {
-    private var isDisposed = false
-
-    private val mutex = Mutex()
-
     private val eventBus = eventBus<RetryEvent>(data.eventData.scope) {
         replay = data.eventData.replay
         onError = data.eventData.onError
         overflowStrategy = data.eventData.overflowStrategy
         extraBufferCapacity = data.eventData.extraBufferCapacity
+    }
+    private var isDisposed = false
+    private val mutex = Mutex()
+    private val metricsCollector: RetryMetricsCollector = RetryMetricsCollector(data.metricsData, eventBus)
+
+    private fun shouldRetryOnThrowable(attempt: Int, throwable: Throwable): Boolean {
+        if (!data.predicate.shouldRetry(throwable)) return false
+        if (attempt >= data.maxAttempts && data.failAfterMaxRetries) return false
+        return true
+    }
+
+    private fun shouldRetryOnResult(attempt: Int, result: Any?): Boolean {
+        if (!data.predicate.shouldRetryOnResult(result)) return false
+        if (attempt >= data.maxAttempts && data.failAfterMaxRetries) {
+            return when (data.onResultExhaustion) {
+                OnResultExhaustion.THROW -> throw MaxRetriesExceededException(attempt, result)
+                OnResultExhaustion.RETURN_LAST -> false
+            }
+        }
+        return true
+    }
+
+    private fun nextDelay(nextAttempt: Int): Duration {
+        val delay = data.backoffStrategy.calculateDelay(nextAttempt)
+        return if (delay < Duration.ZERO) Duration.ZERO else delay
+    }
+
+    private fun collectMetrics() {
+        metricsCollector.collectMetrics()
     }
 
     /**
@@ -68,6 +94,8 @@ public class Retry internal constructor(public val data: RetryData) : Disposable
      */
     public suspend fun <T> execute(block: suspend () -> T): T {
         var attempt = 1
+        collectMetrics()
+
         while (true) {
             mutex.withLock {
                 if (isDisposed) {
@@ -89,7 +117,7 @@ public class Retry internal constructor(public val data: RetryData) : Disposable
                 throw cancellation
             } catch (throwable: Throwable) {
                 eventBus.push(RetryEvent.RetryAttemptFailed(attempt, throwable))
-                if (!shouldRetry(attempt, throwable)) {
+                if (!shouldRetryOnThrowable(attempt, throwable)) {
                     eventBus.push(RetryEvent.RetryFailed(attempt, throwable))
                     throw throwable
                 }
@@ -149,28 +177,6 @@ public class Retry internal constructor(public val data: RetryData) : Disposable
         noinline onError: (suspend (Throwable) -> Unit)? = null,
         noinline on: suspend (E) -> Unit
     ): Job = subscribe(E::class, onError, on)
-
-    private fun shouldRetry(attempt: Int, throwable: Throwable): Boolean {
-        if (!data.predicate.shouldRetry(throwable)) return false
-        if (attempt >= data.maxAttempts && data.failAfterMaxRetries) return false
-        return true
-    }
-
-    private fun shouldRetryOnResult(attempt: Int, result: Any?): Boolean {
-        if (!data.predicate.shouldRetryOnResult(result)) return false
-        if (attempt >= data.maxAttempts && data.failAfterMaxRetries) {
-            return when (data.onResultExhaustion) {
-                OnResultExhaustion.THROW -> throw MaxRetriesExceededException(attempt, result)
-                OnResultExhaustion.RETURN_LAST -> false
-            }
-        }
-        return true
-    }
-
-    private fun nextDelay(nextAttempt: Int): Duration {
-        val delay = data.backoffStrategy.calculateDelay(nextAttempt)
-        return if (delay < Duration.ZERO) Duration.ZERO else delay
-    }
 }
 
 /**
