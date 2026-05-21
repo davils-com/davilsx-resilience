@@ -19,6 +19,7 @@ package com.davils.resilience.retry
 import com.davils.kore.annotation.KoreDsl
 import com.davils.kore.pattern.dsl.validation.DslValidator
 import com.davils.resilience.retry.event.RetryEventBuilder
+import com.davils.resilience.retry.metrics.RetryMetricsCollectorBuilder
 import com.davils.resilience.retry.predicate.Predicate
 import com.davils.resilience.retry.predicate.alwaysRetryOnThrowablePredicate
 import com.davils.resilience.retry.strategy.BackoffStrategy
@@ -35,6 +36,7 @@ import com.davils.resilience.retry.strategy.constant.constantBackoff
 @KoreDsl
 public class RetryBuilder internal constructor() : DslValidator<RetryData>() {
     private val eventBuilder = RetryEventBuilder()
+    private val metricsBuilder = RetryMetricsCollectorBuilder()
 
     /**
      * The maximum number of attempts to perform, including the initial call.
@@ -132,15 +134,22 @@ public class RetryBuilder internal constructor() : DslValidator<RetryData>() {
         eventBuilder.builder()
     }
 
+    public fun metrics(builder: RetryMetricsCollectorBuilder.() -> Unit) {
+        metricsBuilder.builder()
+    }
+
     override fun data(): RetryData {
         val eventData = eventBuilder.produce()
+        val metricsData = metricsBuilder.produce()
+
         return RetryData(
             maxAttempts = maxAttempts,
             backoffStrategy = backoffStrategy,
             predicate = predicate,
             failAfterMaxRetries = failAfterMaxRetries,
             onResultExhaustion = onResultExhaustion,
-            eventData = eventData
+            eventData = eventData,
+            metricsData = metricsData
         )
     }
 }
