@@ -19,7 +19,6 @@ package com.davils.resilience.retry
 import com.davils.kore.pattern.event.eventBus
 import com.davils.resilience.common.DisposableAsync
 import com.davils.resilience.retry.event.RetryEvent
-import com.davils.resilience.retry.metrics.RetryMetricsCollector
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -49,7 +48,6 @@ public class Retry internal constructor(private val data: RetryData) : Disposabl
     }
     private var isDisposed = false
     private val mutex = Mutex()
-    private val metricsCollector: RetryMetricsCollector = RetryMetricsCollector(data.metricsData, eventBus)
 
     private fun shouldRetryOnThrowable(attempt: Int, throwable: Throwable): Boolean {
         if (!data.predicate.shouldRetry(throwable)) return false
@@ -73,10 +71,6 @@ public class Retry internal constructor(private val data: RetryData) : Disposabl
         return if (delay < Duration.ZERO) Duration.ZERO else delay
     }
 
-    private fun collectMetrics() {
-        metricsCollector.collectMetrics()
-    }
-
     /**
      * Executes the given [block] and retries it if it fails according to the configured policy.
      *
@@ -93,7 +87,6 @@ public class Retry internal constructor(private val data: RetryData) : Disposabl
      */
     public suspend fun <T> execute(block: suspend () -> T): T {
         var attempt = 1
-        collectMetrics()
 
         while (true) {
             mutex.withLock {
@@ -131,7 +124,7 @@ public class Retry internal constructor(private val data: RetryData) : Disposabl
 
     /**
      * Disposes of this retry instance, cancelling any active subscriptions and preventing new executions.
-     *
+     * 
      * Once disposed, subsequent calls to [execute] will throw a [CancellationException].
      * A [RetryEvent.RetryDisposed] event is emitted before closing the event bus.
      *
