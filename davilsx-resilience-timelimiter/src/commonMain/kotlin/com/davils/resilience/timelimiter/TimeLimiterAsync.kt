@@ -1,5 +1,6 @@
 package com.davils.resilience.timelimiter
 
+import com.davils.resilience.common.DisposableAsync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -11,10 +12,10 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 
-public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLimiterProvider<T> {
+public class TimeLimiterAsync(private val data: TimeLimiterData) : DisposableAsync {
     private val detachedScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    public suspend fun execute(block: suspend () -> T): T? {
+    public suspend fun <T>execute(block: suspend () -> T): T? {
         if (data.timeout == Duration.ZERO) return block()
 
         return when (data.strategy) {
@@ -23,7 +24,7 @@ public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLi
         }
     }
 
-    private suspend fun executeHard(block: suspend () -> T): T? {
+    private suspend fun <T>executeHard(block: suspend () -> T): T? {
         try {
             return withTimeout(data.timeout.inWholeMilliseconds.milliseconds) {
                 block()
@@ -34,7 +35,7 @@ public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLi
         }
     }
 
-    private suspend fun executeSoft(block: suspend () -> T): T? {
+    private suspend fun <T>executeSoft(block: suspend () -> T): T? {
         val deferred = detachedScope.async {
             block()
         }
@@ -52,8 +53,9 @@ public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLi
         }
     }
 
-    private suspend fun handleFallbackOrThrow(exception: Throwable): T? {
-        val fallback = data.fallback
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun <T>handleFallbackOrThrow(exception: Throwable): T? {
+        val fallback = data.fallback as? (suspend (Throwable) -> T?)
         return if (fallback != null) {
             try {
                 fallback(exception)
@@ -64,6 +66,11 @@ public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLi
             throw exception
         }
     }
+
+    override suspend fun dispose() {
+        TODO("Not yet implemented")
+    }
 }
 
-public fun <T> timeLimiter(builder: TimeLimiterBuilder<T>.() -> Unit): TimeLimiterAsync<T> = TimeLimiterAsync<T>(TimeLimiterBuilder<T>().apply(builder).build())
+public fun timeLimiter(builder: TimeLimiterBuilder.() -> Unit): TimeLimiterAsync =
+    TimeLimiterAsync(TimeLimiterBuilder().apply(builder).build())

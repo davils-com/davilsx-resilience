@@ -5,11 +5,10 @@ import kotlin.time.Duration
 
 
 @KoreDsl
-public class TimeLimiterBuilder<T> internal constructor() {
+public class TimeLimiterBuilder internal constructor() {
     public var timeout: Duration = Duration.ZERO
     public var cancelOnTimeout: Boolean = true
     public var strategy: TimeoutStrategy = TimeoutStrategy.HARD
-    public var fallback: (suspend (Throwable) -> T?)? = null
 
     public fun timeout(timeout: Duration) {
         require(!timeout.isNegative()) { "timeout must be non-negative" }
@@ -24,14 +23,9 @@ public class TimeLimiterBuilder<T> internal constructor() {
         this.strategy = strategy
     }
 
-    public fun fallback(fallback: suspend (Throwable) -> T?) {
-        this.fallback = fallback
-    }
-
-    internal fun build(): TimeLimiterData<T> = TimeLimiterData(
+    internal fun build(): TimeLimiterData = TimeLimiterData(
         timeout = timeout,
         cancelOnTimeout = cancelOnTimeout,
-        strategy = strategy,
-        fallback = fallback,
+        strategy = strategy
     )
 }
