@@ -12,7 +12,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 
-public class TimeLimiterAsync(private val data: TimeLimiterData) : DisposableAsync {
+public class TimeLimiter(private val data: TimeLimiterData) : DisposableAsync {
     private val detachedScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     public suspend fun <T>execute(block: suspend () -> T): T? {
@@ -72,5 +72,5 @@ public class TimeLimiterAsync(private val data: TimeLimiterData) : DisposableAsy
     }
 }
 
-public fun timeLimiter(builder: TimeLimiterBuilder.() -> Unit): TimeLimiterAsync =
-    TimeLimiterAsync(TimeLimiterBuilder().apply(builder).build())
+public fun timeLimiter(builder: TimeLimiterBuilder.() -> Unit): TimeLimiter =
+    TimeLimiter(TimeLimiterBuilder().apply(builder).produce())
