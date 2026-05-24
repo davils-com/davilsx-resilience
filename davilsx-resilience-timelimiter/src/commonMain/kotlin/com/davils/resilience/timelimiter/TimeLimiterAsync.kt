@@ -12,7 +12,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 
-public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLimiterProvider<T>, DisposableAsync {
+public class TimeLimiterAsync<T>(private val data: TimeLimiterData<T>) : DisposableAsync {
     private val detachedScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     public suspend fun execute(block: suspend () -> T): T? {
