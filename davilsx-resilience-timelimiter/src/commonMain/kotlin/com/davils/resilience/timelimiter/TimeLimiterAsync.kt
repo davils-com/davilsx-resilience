@@ -1,5 +1,6 @@
 package com.davils.resilience.timelimiter
 
+import com.davils.resilience.common.DisposableAsync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -11,7 +12,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 
-public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLimiterProvider<T> {
+public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLimiterProvider<T>, DisposableAsync {
     private val detachedScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     public suspend fun execute(block: suspend () -> T): T? {
@@ -63,6 +64,10 @@ public class TimeLimiterAsync<T>(override val data: TimeLimiterData<T>) : TimeLi
         } else {
             throw exception
         }
+    }
+
+    override suspend fun dispose() {
+        TODO("Not yet implemented")
     }
 }
 
