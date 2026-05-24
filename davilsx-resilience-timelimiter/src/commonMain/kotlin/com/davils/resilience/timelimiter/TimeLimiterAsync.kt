@@ -72,5 +72,5 @@ public class TimeLimiterAsync(private val data: TimeLimiterData) : DisposableAsy
     }
 }
 
-public fun <T> timeLimiter(builder: TimeLimiterBuilder.() -> Unit): TimeLimiterAsync =
+public fun timeLimiter(builder: TimeLimiterBuilder.() -> Unit): TimeLimiterAsync =
     TimeLimiterAsync(TimeLimiterBuilder().apply(builder).build())
