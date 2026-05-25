@@ -1,8 +1,8 @@
 plugins {
     `resilience-core-multiplatform`
     `resilience-code-analysis`
+    `resilience-testing-multiplatform`
     `resilience-compliance-security`
-    `resilience-testing`
 }
 
 kreate {
