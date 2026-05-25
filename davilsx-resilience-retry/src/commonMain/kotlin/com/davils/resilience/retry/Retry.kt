@@ -16,13 +16,13 @@
 
 package com.davils.resilience.retry
 
+import com.davils.kore.pattern.event.EventBus
 import com.davils.kore.pattern.event.eventBus
 import com.davils.resilience.common.DisposableAsync
 import com.davils.resilience.retry.event.RetryEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 import kotlin.time.Duration
@@ -39,15 +39,15 @@ import kotlin.time.Duration
  *
  * @since 1.0.0
  */
-public class Retry internal constructor(private val data: RetryData) : DisposableAsync {
-    private val eventBus = eventBus<RetryEvent>(data.eventData.scope) {
+public class Retry internal constructor(private val data: RetryData) : DisposableAsync<RetryEvent>() {
+    override val eventBus: EventBus<RetryEvent> = eventBus(data.eventData.scope) {
         replay = data.eventData.replay
         onError = data.eventData.onError
         overflowStrategy = data.eventData.overflowStrategy
         extraBufferCapacity = data.eventData.extraBufferCapacity
     }
-    private var isDisposed = false
-    private val mutex = Mutex()
+    override val disposedEvent: RetryEvent
+        get() = RetryEvent.RetryDisposed
 
     private fun shouldRetryOnThrowable(attempt: Int, throwable: Throwable): Boolean {
         if (!data.predicate.shouldRetry(throwable)) return false
@@ -119,24 +119,6 @@ public class Retry internal constructor(private val data: RetryData) : Disposabl
             eventBus.push(RetryEvent.RetryAttemptBackoff(attempt, delayDuration))
             delay(delayDuration)
             attempt++
-        }
-    }
-
-    /**
-     * Disposes of this retry instance, cancelling any active subscriptions and preventing new executions.
-     * 
-     * Once disposed, subsequent calls to [execute] will throw a [CancellationException].
-     * A [RetryEvent.RetryDisposed] event is emitted before closing the event bus.
-     *
-     * @since 1.0.0
-     */
-    override suspend fun dispose() {
-        mutex.withLock {
-            if (isDisposed) return
-            eventBus.push(RetryEvent.RetryDisposed)
-
-            isDisposed = true
-            eventBus.dispose()
         }
     }
 

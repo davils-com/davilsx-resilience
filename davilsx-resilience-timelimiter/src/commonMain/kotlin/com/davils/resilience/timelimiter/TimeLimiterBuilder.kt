@@ -1,17 +1,21 @@
 package com.davils.resilience.timelimiter
 
 import com.davils.kore.annotation.KoreDsl
+import com.davils.kore.pattern.dsl.validation.DslValidator
+import com.davils.resilience.common.event.ResilienceEventBuilder
 import kotlin.time.Duration
 
 
 @KoreDsl
-public class TimeLimiterBuilder internal constructor() {
+public class TimeLimiterBuilder internal constructor() : DslValidator<TimeLimiterData>() {
+    private val eventBuilder = ResilienceEventBuilder()
+
     public var timeout: Duration = Duration.ZERO
     public var cancelOnTimeout: Boolean = true
     public var strategy: TimeoutStrategy = TimeoutStrategy.HARD
+    public var fallback: (suspend (Throwable) -> Any?)? = null
 
     public fun timeout(timeout: Duration) {
-        require(!timeout.isNegative()) { "timeout must be non-negative" }
         this.timeout = timeout
     }
 
@@ -23,9 +27,23 @@ public class TimeLimiterBuilder internal constructor() {
         this.strategy = strategy
     }
 
-    internal fun build(): TimeLimiterData = TimeLimiterData(
-        timeout = timeout,
-        cancelOnTimeout = cancelOnTimeout,
-        strategy = strategy
-    )
+    public fun <T>fallback(fallback: suspend (Throwable) -> T?) {
+        this.fallback = fallback
+    }
+
+    public fun event(block: ResilienceEventBuilder.() -> Unit) {
+        eventBuilder.apply(block)
+    }
+
+    override fun data(): TimeLimiterData {
+        val eventData = eventBuilder.produce()
+
+        return TimeLimiterData(
+            timeout = timeout,
+            cancelOnTimeout = cancelOnTimeout,
+            strategy = strategy,
+            fallback = fallback,
+            eventData = eventData
+        )
+    }
 }
