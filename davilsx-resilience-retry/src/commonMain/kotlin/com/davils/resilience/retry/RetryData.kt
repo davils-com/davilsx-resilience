@@ -20,7 +20,6 @@ import com.davils.kore.pattern.dsl.verification.DslVerifiableData
 import com.davils.kore.pattern.dsl.verification.DslVerification
 import com.davils.kore.pattern.dsl.verification.verifyDsl
 import com.davils.resilience.retry.event.RetryEventData
-import com.davils.resilience.retry.metrics.RetryMetricsCollectorData
 import com.davils.resilience.retry.predicate.Predicate
 import com.davils.resilience.retry.strategy.BackoffStrategy
 
@@ -82,8 +81,7 @@ public data class RetryData internal constructor(
      *
      * @since 1.0.0
      */
-    val eventData: RetryEventData,
-    val metricsData: RetryMetricsCollectorData
+    val eventData: RetryEventData
 ) : DslVerifiableData {
     override fun validate(): DslVerification = verifyDsl {
         if (maxAttempts < 1) {

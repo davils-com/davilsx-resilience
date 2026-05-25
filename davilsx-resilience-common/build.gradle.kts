@@ -27,7 +27,7 @@ kotlin {
 
         commonMain {
             dependencies {
-                implementation(libs.bundles.resilience.shared.impl)
+                api(libs.bundles.resilience.common.api)
             }
         }
 

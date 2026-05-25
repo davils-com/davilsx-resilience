@@ -26,12 +26,6 @@ kotlin {
             }
         }
 
-        commonMain {
-            dependencies {
-                implementation(libs.bundles.resilience.shared.impl)
-            }
-        }
-
         commonTest {
             dependencies {
                 implementation(libs.bundles.resilience.tests.common.impl)
