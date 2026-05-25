@@ -16,6 +16,24 @@
 
 package com.davils.resilience.common
 
-public interface DisposableAsync {
-    public suspend fun dispose()
+import com.davils.kore.pattern.event.EventBus
+import com.davils.resilience.common.event.ResilienceEvent
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+public abstract class DisposableAsync<T : ResilienceEvent> {
+    protected abstract val eventBus: EventBus<T>
+    protected abstract val disposedEvent : T
+    protected val mutex: Mutex = Mutex()
+    protected var isDisposed: Boolean = false
+
+    public suspend fun dispose() {
+        mutex.withLock {
+            if (isDisposed) return
+            eventBus.push(disposedEvent)
+
+            isDisposed = true
+            eventBus.dispose()
+        }
+    }
 }
