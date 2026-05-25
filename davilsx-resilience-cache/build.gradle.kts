@@ -3,7 +3,7 @@ plugins {
     `resilience-code-analysis`
     `resilience-compliance-security`
     `resilience-testing`
-    `resilience-common`
+    `resilience-common-multiplatform`
 }
 
 kreate {
