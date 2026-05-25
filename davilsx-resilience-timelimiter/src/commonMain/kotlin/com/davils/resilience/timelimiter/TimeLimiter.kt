@@ -1,19 +1,31 @@
 package com.davils.resilience.timelimiter
 
+import com.davils.kore.pattern.event.EventBus
+import com.davils.kore.pattern.event.eventBus
 import com.davils.resilience.common.DisposableAsync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 
-public class TimeLimiter(private val data: TimeLimiterData) : DisposableAsync {
+public class TimeLimiter(private val data: TimeLimiterData) : DisposableAsync<TimeLimiterEvent>() {
     private val detachedScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    override val eventBus: EventBus<TimeLimiterEvent> = eventBus(data.eventData.scope) {
+        replay = data.eventData.replay
+        onError = data.eventData.onError
+        overflowStrategy = data.eventData.overflowStrategy
+        extraBufferCapacity = data.eventData.extraBufferCapacity
+    }
+    override val disposedEvent: TimeLimiterEvent
+        get() = TimeLimiterEvent.TimeLimiterDisposed
 
     public suspend fun <T>execute(block: suspend () -> T): T? {
         if (data.timeout == Duration.ZERO) return block()
@@ -46,6 +58,7 @@ public class TimeLimiter(private val data: TimeLimiterData) : DisposableAsync {
             }
         } catch (_: TimeoutCancellationException) {
             if (data.cancelOnTimeout) deferred.cancel()
+            eventBus.push(TimeLimiterEvent.TimeoutExceeded(data.timeout.inWholeMilliseconds))
             val ex = TimeoutExceededException(data.timeout.inWholeMilliseconds)
             return handleFallbackOrThrow(ex)
         } catch (cancellation: CancellationException) {
@@ -67,9 +80,16 @@ public class TimeLimiter(private val data: TimeLimiterData) : DisposableAsync {
         }
     }
 
-    override suspend fun dispose() {
-        TODO("Not yet implemented")
-    }
+    public fun <E : TimeLimiterEvent> subscribe(
+        eventType: KClass<E>,
+        onError: (suspend (Throwable) -> Unit)? = null,
+        on: suspend (E) -> Unit
+    ): Job = eventBus.subscribe(eventType, onError, on)
+
+    public inline fun <reified E : TimeLimiterEvent> subscribe(
+        noinline onError: (suspend (Throwable) -> Unit)? = null,
+        noinline on: suspend (E) -> Unit
+    ): Job = subscribe(E::class, onError, on)
 }
 
 public fun timeLimiter(builder: TimeLimiterBuilder.() -> Unit): TimeLimiter =
