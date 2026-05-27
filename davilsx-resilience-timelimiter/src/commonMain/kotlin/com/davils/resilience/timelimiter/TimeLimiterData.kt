@@ -3,6 +3,7 @@ package com.davils.resilience.timelimiter
 import com.davils.kore.pattern.creational.dsl.verification.DslVerifiableData
 import com.davils.kore.pattern.creational.dsl.verification.DslVerification
 import com.davils.kore.pattern.creational.dsl.verification.verifyDsl
+import com.davils.resilience.common.ResilienceComponentData
 import com.davils.resilience.common.event.ResilienceEventData
 import kotlin.time.Duration
 
@@ -12,8 +13,8 @@ public data class TimeLimiterData internal constructor(
     val cancelOnTimeout: Boolean,
     val strategy: TimeoutStrategy,
     val fallback: (suspend (Throwable) -> Any?)?,
-    val eventData: ResilienceEventData
-) : DslVerifiableData {
+    override val eventData: ResilienceEventData
+) : ResilienceComponentData {
     override fun validate(): DslVerification = verifyDsl {
         if (timeout.isNegative()) {
             fail("timeout must be non-negative", "timeout")

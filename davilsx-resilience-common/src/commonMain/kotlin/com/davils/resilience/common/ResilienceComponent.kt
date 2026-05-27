@@ -19,14 +19,21 @@ package com.davils.resilience.common
 import com.davils.kore.pattern.functional.loan.DisposableAsync
 import com.davils.kore.pattern.reactive.event.EventBus
 import com.davils.kore.pattern.reactive.event.EventMarker
+import com.davils.kore.pattern.reactive.event.eventBus
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-public abstract class ResilienceComponent<T : EventMarker> : DisposableAsync {
-    protected abstract val disposeEvent: T
-    protected abstract val eventBus: EventBus<T>
+public abstract class ResilienceComponent<D : ResilienceComponentData, E : EventMarker> : DisposableAsync {
     private var isDisposed: Boolean = false
+    protected abstract val data: D
+    protected abstract val disposeEvent: E
     protected val mutex: Mutex = Mutex()
+    protected val eventBus: EventBus<E> = eventBus(data.eventData.scope) {
+        replay = data.eventData.replay
+        onError = data.eventData.onError
+        overflowStrategy = data.eventData.overflowStrategy
+        extraBufferCapacity = data.eventData.extraBufferCapacity
+    }
 
     public suspend fun isDisposed(): Boolean = mutex.withLock { isDisposed }
 

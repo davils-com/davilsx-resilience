@@ -17,8 +17,7 @@
 package com.davils.resilience.retry
 
 import com.davils.kore.annotation.KoreDsl
-import com.davils.kore.pattern.creational.dsl.validation.DslValidator
-import com.davils.resilience.retry.event.RetryEventBuilder
+import com.davils.resilience.common.ResilienceComponentBuilder
 import com.davils.resilience.retry.predicate.Predicate
 import com.davils.resilience.retry.predicate.alwaysRetryOnThrowablePredicate
 import com.davils.resilience.retry.strategy.BackoffStrategy
@@ -33,9 +32,7 @@ import com.davils.resilience.retry.strategy.constant.constantBackoff
  * @since 1.0.0
  */
 @KoreDsl
-public class RetryBuilder internal constructor() : DslValidator<RetryData>() {
-    private val eventBuilder = RetryEventBuilder()
-
+public class RetryBuilder internal constructor() : ResilienceComponentBuilder<RetryData>() {
     /**
      * The maximum number of attempts to perform, including the initial call.
      *
@@ -119,19 +116,6 @@ public class RetryBuilder internal constructor() : DslValidator<RetryData>() {
         this.predicate = predicate
     }
 
-    /**
-     * Configures the event system for the retry instance.
-     *
-     * Through this DSL, you can customize the coroutine scope, buffer capacity,
-     * and error handling of the internal event bus.
-     *
-     * @param builder Configuration block applied to a [RetryEventBuilder].
-     * @since 1.0.0
-     */
-    public fun event(builder: RetryEventBuilder.() -> Unit) {
-        eventBuilder.builder()
-    }
-
     override fun data(): RetryData {
         val eventData = eventBuilder.produce()
         return RetryData(
@@ -140,7 +124,7 @@ public class RetryBuilder internal constructor() : DslValidator<RetryData>() {
             predicate = predicate,
             failAfterMaxRetries = failAfterMaxRetries,
             onResultExhaustion = onResultExhaustion,
-            eventData = eventData,
+            eventData = eventData
         )
     }
 }

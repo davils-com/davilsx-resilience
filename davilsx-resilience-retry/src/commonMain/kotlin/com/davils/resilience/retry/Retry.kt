@@ -16,8 +16,6 @@
 
 package com.davils.resilience.retry
 
-import com.davils.kore.pattern.reactive.event.EventBus
-import com.davils.kore.pattern.reactive.event.eventBus
 import com.davils.resilience.common.ResilienceComponent
 import com.davils.resilience.retry.event.RetryEvent
 import kotlinx.coroutines.CancellationException
@@ -38,16 +36,11 @@ import kotlin.time.Duration
  *
  * @since 1.0.0
  */
-public class Retry internal constructor(private val data: RetryData) : ResilienceComponent<RetryEvent>() {
+public class Retry internal constructor(
+    override val data: RetryData
+) : ResilienceComponent<RetryData, RetryEvent>() {
     override val disposeEvent: RetryEvent
         get() = RetryEvent.RetryDisposed
-
-    override val eventBus: EventBus<RetryEvent> = eventBus(data.eventData.scope) {
-        replay = data.eventData.replay
-        onError = data.eventData.onError
-        overflowStrategy = data.eventData.overflowStrategy
-        extraBufferCapacity = data.eventData.extraBufferCapacity
-    }
 
     private fun shouldRetryOnThrowable(attempt: Int, throwable: Throwable): Boolean {
         if (!data.predicate.shouldRetryOnThrowable(throwable)) return false

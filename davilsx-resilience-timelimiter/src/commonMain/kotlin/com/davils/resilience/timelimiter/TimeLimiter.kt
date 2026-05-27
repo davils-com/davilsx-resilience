@@ -16,19 +16,14 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 
-public class TimeLimiter(private val data: TimeLimiterData) : ResilienceComponent<TimeLimiterEvent>() {
+public class TimeLimiter internal constructor(
+    override val data: TimeLimiterData
+) : ResilienceComponent<TimeLimiterData, TimeLimiterEvent>() {
     private val detachedScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     override val disposeEvent: TimeLimiterEvent
         get() = TimeLimiterEvent.TimeLimiterDisposed
 
-    override val eventBus: EventBus<TimeLimiterEvent> = eventBus(data.eventData.scope) {
-        replay = data.eventData.replay
-        onError = data.eventData.onError
-        overflowStrategy = data.eventData.overflowStrategy
-        extraBufferCapacity = data.eventData.extraBufferCapacity
-    }
-
-    public suspend fun <T>execute(block: suspend () -> T): T? {
+    public suspend fun <T> execute(block: suspend () -> T): T? {
         if (data.timeout == Duration.ZERO) return block()
 
         return when (data.strategy) {
@@ -37,7 +32,7 @@ public class TimeLimiter(private val data: TimeLimiterData) : ResilienceComponen
         }
     }
 
-    private suspend fun <T>executeHard(block: suspend () -> T): T? {
+    private suspend fun <T> executeHard(block: suspend () -> T): T? {
         try {
             return withTimeout(data.timeout.inWholeMilliseconds.milliseconds) {
                 block()
@@ -48,7 +43,7 @@ public class TimeLimiter(private val data: TimeLimiterData) : ResilienceComponen
         }
     }
 
-    private suspend fun <T>executeSoft(block: suspend () -> T): T? {
+    private suspend fun <T> executeSoft(block: suspend () -> T): T? {
         val deferred = detachedScope.async {
             block()
         }
@@ -68,7 +63,7 @@ public class TimeLimiter(private val data: TimeLimiterData) : ResilienceComponen
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun <T>handleFallbackOrThrow(exception: Throwable): T? {
+    private suspend fun <T> handleFallbackOrThrow(exception: Throwable): T? {
         val fallback = data.fallback as? (suspend (Throwable) -> T?)
         return if (fallback != null) {
             try {
