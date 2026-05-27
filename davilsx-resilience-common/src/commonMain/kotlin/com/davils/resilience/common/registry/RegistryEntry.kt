@@ -27,7 +27,7 @@ import com.davils.resilience.common.ResilienceComponent
  * @param T The type of the item, which must implement [ResilienceComponent].
  * @since 1.0.0
  */
-public data class RegistryItem<T : ResilienceComponent<*>>(
+public data class RegistryItem<T : ResilienceComponent<*, *>>(
     /**
      * The unique name associated with the registry item.
      *
