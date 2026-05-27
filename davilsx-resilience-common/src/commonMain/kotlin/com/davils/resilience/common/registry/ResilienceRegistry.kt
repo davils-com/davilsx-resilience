@@ -33,7 +33,7 @@ import kotlinx.coroutines.sync.withLock
  * @param T The type of items stored in the registry, which must implement [DisposableAsync].
  * @since 1.0.0
  */
-public abstract class Registry<T : ResilienceComponent<*, *>> : DisposableAsync {
+public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : DisposableAsync {
     private val mutex = Mutex()
     private val registry = mutableMapOf<String, T>()
 
@@ -89,16 +89,16 @@ public abstract class Registry<T : ResilienceComponent<*, *>> : DisposableAsync 
     }
 
     /**
-     * Adds a [RegistryItem] to the registry.
+     * Adds a [ResilienceRegistryItem] to the registry.
      *
-     * This is a convenience method that uses the name and item from the provided [RegistryItem].
+     * This is a convenience method that uses the name and item from the provided [ResilienceRegistryItem].
      *
-     * @param item The [RegistryItem] containing the name and the item instance.
+     * @param item The [ResilienceRegistryItem] containing the name and the item instance.
      * @return True if the item was successfully added, false if an item with the same name already exists.
      * @throws IllegalArgumentException If the name does not match the required naming convention.
      * @since 1.0.0
      */
-    public suspend fun put(item: RegistryItem<T>): Boolean = put(item.name, item.item)
+    public suspend fun put(item: ResilienceRegistryItem<T>): Boolean = put(item.name, item.item)
 
     /**
      * Adds an item to the registry if the specified condition is met.
@@ -143,24 +143,24 @@ public abstract class Registry<T : ResilienceComponent<*, *>> : DisposableAsync 
     }
 
     /**
-     * Adds multiple items to the registry from an iterable of [RegistryItem].
+     * Adds multiple items to the registry from an iterable of [ResilienceRegistryItem].
      *
-     * @param items An iterable containing [RegistryItem] instances to be added.
+     * @param items An iterable containing [ResilienceRegistryItem] instances to be added.
      * @throws IllegalArgumentException If any name is invalid or if any item already exists in the registry.
      * @since 1.0.0
      */
-    public suspend fun putAll(items: Iterable<RegistryItem<T>>) {
+    public suspend fun putAll(items: Iterable<ResilienceRegistryItem<T>>) {
         putAll(items.associate { it.name to it.item })
     }
 
     /**
      * Adds multiple items to the registry provided as varargs.
      *
-     * @param items Variable number of [RegistryItem] instances to be added.
+     * @param items Variable number of [ResilienceRegistryItem] instances to be added.
      * @throws IllegalArgumentException If any name is invalid or if any item already exists in the registry.
      * @since 1.0.0
      */
-    public suspend fun putAll(vararg items: RegistryItem<T>) {
+    public suspend fun putAll(vararg items: ResilienceRegistryItem<T>) {
         putAll(items.asIterable())
     }
 
@@ -294,13 +294,13 @@ public abstract class Registry<T : ResilienceComponent<*, *>> : DisposableAsync 
     }
 
     /**
-     * Operator for adding a [RegistryItem] to the registry.
+     * Operator for adding a [ResilienceRegistryItem] to the registry.
      *
-     * @param item The [RegistryItem] to be added.
+     * @param item The [ResilienceRegistryItem] to be added.
      * @throws IllegalArgumentException If the name is invalid.
      * @since 1.0.0
      */
-    public suspend operator fun plusAssign(item: RegistryItem<T>) {
+    public suspend operator fun plusAssign(item: ResilienceRegistryItem<T>) {
         put(item)
     }
 

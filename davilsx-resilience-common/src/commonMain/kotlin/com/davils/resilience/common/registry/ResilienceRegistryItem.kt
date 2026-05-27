@@ -19,7 +19,7 @@ package com.davils.resilience.common.registry
 import com.davils.resilience.common.ResilienceComponent
 
 /**
- * Represents an item stored in a [Registry].
+ * Represents an item stored in a [ResilienceRegistry].
  *
  * This data class pairs a unique name with an asynchronous disposable item.
  * It is used for bulk operations and convenient item management within the registry.
@@ -27,7 +27,7 @@ import com.davils.resilience.common.ResilienceComponent
  * @param T The type of the item, which must implement [ResilienceComponent].
  * @since 1.0.0
  */
-public data class RegistryItem<T : ResilienceComponent<*, *>>(
+public data class ResilienceRegistryItem<T : ResilienceComponent<*, *>>(
     /**
      * The unique name associated with the registry item.
      *
