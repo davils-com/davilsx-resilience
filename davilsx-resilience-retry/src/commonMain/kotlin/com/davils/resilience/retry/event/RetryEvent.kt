@@ -17,7 +17,6 @@
 package com.davils.resilience.retry.event
 
 import com.davils.kore.pattern.reactive.event.EventMarker
-import com.davils.resilience.common.event.ResilienceEvent
 import kotlinx.coroutines.CancellationException
 import kotlin.time.Duration
 
