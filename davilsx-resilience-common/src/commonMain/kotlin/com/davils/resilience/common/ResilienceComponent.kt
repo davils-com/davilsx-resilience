@@ -20,8 +20,10 @@ import com.davils.kore.pattern.functional.loan.DisposableAsync
 import com.davils.kore.pattern.reactive.event.EventBus
 import com.davils.kore.pattern.reactive.event.EventMarker
 import com.davils.kore.pattern.reactive.event.eventBus
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
 public abstract class ResilienceComponent<D : ResilienceComponentData, E : EventMarker> : DisposableAsync {
     private var isDisposed: Boolean = false
@@ -46,4 +48,15 @@ public abstract class ResilienceComponent<D : ResilienceComponentData, E : Event
 
         eventBus.dispose()
     }
+
+    public fun <R : EventMarker> subscribe(
+        eventType: KClass<R>,
+        onError: (suspend (Throwable) -> Unit)? = null,
+        on: suspend (R) -> Unit
+    ): Job = eventBus.subscribe(eventType, onError, on)
+
+    public inline fun <reified R : EventMarker> subscribe(
+        noinline onError: (suspend (Throwable) -> Unit)? = null,
+        noinline on: suspend (R) -> Unit
+    ): Job = subscribe(R::class, onError, on)
 }
