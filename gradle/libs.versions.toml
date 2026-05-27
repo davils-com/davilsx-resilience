@@ -51,7 +51,7 @@ build-src = [
     "detekt-gradle-plugin"
 ]
 
-resilience-common-api = [
+resilience-common-common-api = [
     "davilsx-kore",
     "kotlinx-coroutines-core",
     "kotlinx-atomicfu"
