@@ -17,9 +17,7 @@
 package com.davils.resilience.bulkhead
 
 import com.davils.kore.annotation.KoreDsl
-import com.davils.kore.pattern.creational.dsl.validation.DslValidator
 import com.davils.resilience.common.ResilienceComponentBuilder
-import com.davils.resilience.common.event.ResilienceEventBuilder
 
 @KoreDsl
 public class BulkheadBuilder internal constructor() : ResilienceComponentBuilder<BulkheadData>() {

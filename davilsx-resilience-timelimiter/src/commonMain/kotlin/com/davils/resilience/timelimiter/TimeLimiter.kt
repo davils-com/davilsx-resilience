@@ -1,7 +1,5 @@
 package com.davils.resilience.timelimiter
 
-import com.davils.kore.pattern.reactive.event.EventBus
-import com.davils.kore.pattern.reactive.event.eventBus
 import com.davils.resilience.common.ResilienceComponent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
