@@ -14,6 +14,8 @@ kreate {
 }
 
 dependencies {
+    implementation(libs.bundles.resilience.micrometer.jvm.impl)
+
     testImplementation(libs.bundles.resilience.tests.common.impl)
     testImplementation(libs.bundles.resilience.tests.jvm.impl)
 }

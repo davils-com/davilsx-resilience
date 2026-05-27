@@ -26,6 +26,12 @@ kotlin {
             }
         }
 
+        commonMain {
+            dependencies {
+                api(libs.bundles.resilience.ktor.common.impl)
+            }
+        }
+
         commonTest {
             dependencies {
                 implementation(libs.bundles.resilience.tests.common.impl)
