@@ -1,7 +1,7 @@
 plugins {
     `resilience-core-multiplatform`
-    `resilience-code-analysis`
     `resilience-testing-multiplatform`
+    `resilience-code-analysis-multiplatform`
     `resilience-compliance-security`
 }
 
