@@ -18,9 +18,27 @@ package com.davils.resilience.bulkhead
 
 import com.davils.kore.annotation.KoreDsl
 import com.davils.resilience.common.ResilienceComponentBuilder
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 @KoreDsl
 public class BulkheadBuilder internal constructor() : ResilienceComponentBuilder<BulkheadData>() {
+    public var maxConcurrentCalls: Int = 3
+
+    public var maxWaitDuration: Duration = 500.milliseconds
+
+    public fun maxConcurrentCalls(maxConcurrentCalls: Int) {
+        this.maxConcurrentCalls = maxConcurrentCalls
+    }
+
+    public fun maxWaitDuration(maxWaitDuration: Duration) {
+        this.maxWaitDuration = maxWaitDuration
+    }
+
+    public fun maxWaitDuration(maxWaitDurationMillis: Long) {
+        this.maxWaitDuration = maxWaitDurationMillis.milliseconds
+    }
+
     override fun data(): BulkheadData {
         val eventData = eventBuilder.produce()
         return BulkheadData(eventData)
