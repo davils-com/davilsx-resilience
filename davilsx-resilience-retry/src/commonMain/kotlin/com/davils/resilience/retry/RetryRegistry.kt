@@ -16,14 +16,14 @@
 
 package com.davils.resilience.retry
 
-import com.davils.resilience.common.registry.Registry
+import com.davils.resilience.common.registry.ResilienceRegistry
 
 /**
- * A specialized [Registry] for storing and managing [Retry] instances.
+ * A specialized [ResilienceRegistry] for storing and managing [Retry] instances.
  *
  * This registry allows for centralized management of retry configurations across the application.
  * Being an `object`, it provides a single global point of access for retry mechanisms.
  *
  * @since 1.0.0
  */
-public object RetryRegistry : Registry<Retry>()
+public object RetryRegistry : ResilienceRegistry<Retry>()
