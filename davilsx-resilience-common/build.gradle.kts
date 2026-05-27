@@ -27,7 +27,7 @@ kotlin {
 
         commonMain {
             dependencies {
-                api(libs.bundles.resilience.common.api)
+                api(libs.bundles.resilience.common.common.api)
             }
         }
 
