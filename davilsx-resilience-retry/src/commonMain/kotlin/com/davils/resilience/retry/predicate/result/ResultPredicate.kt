@@ -27,7 +27,7 @@ import com.davils.resilience.retry.predicate.Predicate
  * than thrown exceptions, such as HTTP clients that return response objects
  * with status codes, or polling endpoints returning a "not ready" sentinel.
  *
- * The exception-based [shouldRetry] always returns false, which keeps result
+ * The exception-based [shouldRetryOnThrowable] always returns false, which keeps result
  * predicates orthogonal to throwable predicates. To combine both behaviors,
  * configure two retries or wrap multiple predicates explicitly.
  *
@@ -43,7 +43,7 @@ public class ResultPredicate<T> internal constructor(private val data: ResultPre
      * @return Always false.
      * @since 1.0.0
      */
-    override fun shouldRetry(throwable: Throwable?): Boolean = false
+    override fun shouldRetryOnThrowable(throwable: Throwable?): Boolean = false
 
     /**
      * Evaluates the configured condition against the successful result value.

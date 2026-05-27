@@ -17,7 +17,7 @@
 package com.davils.resilience.retry.predicate.throwable
 
 import com.davils.kore.annotation.KoreDsl
-import com.davils.kore.pattern.dsl.validation.DslValidator
+import com.davils.kore.pattern.creational.dsl.validation.DslValidator
 import kotlin.reflect.KClass
 
 /**

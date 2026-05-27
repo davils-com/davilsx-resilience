@@ -10,34 +10,34 @@ class ThrowablePredicateTest : FunSpec({
 
             test("returns false for null throwable") {
                 val predicate = throwablePredicate { throwable(RuntimeException::class) }
-                predicate.shouldRetry(null) shouldBe false
+                predicate.shouldRetryOnThrowable(null) shouldBe false
             }
 
             test("returns true when throwable matches registered type") {
                 val predicate = throwablePredicate { throwable(RuntimeException::class) }
-                predicate.shouldRetry(RuntimeException("error")) shouldBe true
+                predicate.shouldRetryOnThrowable(RuntimeException("error")) shouldBe true
             }
 
             test("returns true when throwable is a subclass of registered type") {
                 val predicate = throwablePredicate { throwable(Exception::class) }
-                predicate.shouldRetry(IllegalArgumentException("sub")) shouldBe true
+                predicate.shouldRetryOnThrowable(IllegalArgumentException("sub")) shouldBe true
             }
 
             test("returns false when throwable does not match any registered type") {
                 val predicate = throwablePredicate { throwable(IllegalArgumentException::class) }
-                predicate.shouldRetry(RuntimeException("other")) shouldBe false
+                predicate.shouldRetryOnThrowable(RuntimeException("other")) shouldBe false
             }
 
             test("returns true when throwable matches one of multiple registered types") {
                 val predicate = throwablePredicate {
                     throwables(IllegalArgumentException::class, NullPointerException::class)
                 }
-                predicate.shouldRetry(NullPointerException()) shouldBe true
+                predicate.shouldRetryOnThrowable(NullPointerException()) shouldBe true
             }
 
             test("returns false when no throwables are registered") {
                 val predicate = throwablePredicate {}
-                predicate.shouldRetry(RuntimeException()) shouldBe false
+                predicate.shouldRetryOnThrowable(RuntimeException()) shouldBe false
             }
         }
     }
@@ -50,7 +50,7 @@ class ThrowablePredicateTest : FunSpec({
 
         test("creates predicate with empty throwables list when no throwables added") {
             val predicate = throwablePredicate {}
-            predicate.shouldRetry(RuntimeException()) shouldBe false
+            predicate.shouldRetryOnThrowable(RuntimeException()) shouldBe false
         }
     }
 })

@@ -1,8 +1,8 @@
 package com.davils.resilience.timelimiter
 
-import com.davils.kore.pattern.event.EventBus
-import com.davils.kore.pattern.event.eventBus
-import com.davils.resilience.common.DisposableAsync
+import com.davils.kore.pattern.reactive.event.EventBus
+import com.davils.kore.pattern.reactive.event.eventBus
+import com.davils.resilience.common.ResilienceComponent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,16 +16,17 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 
-public class TimeLimiter(private val data: TimeLimiterData) : DisposableAsync<TimeLimiterEvent>() {
+public class TimeLimiter(private val data: TimeLimiterData) : ResilienceComponent<TimeLimiterEvent>() {
     private val detachedScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    override val disposeEvent: TimeLimiterEvent
+        get() = TimeLimiterEvent.TimeLimiterDisposed
+
     override val eventBus: EventBus<TimeLimiterEvent> = eventBus(data.eventData.scope) {
         replay = data.eventData.replay
         onError = data.eventData.onError
         overflowStrategy = data.eventData.overflowStrategy
         extraBufferCapacity = data.eventData.extraBufferCapacity
     }
-    override val disposedEvent: TimeLimiterEvent
-        get() = TimeLimiterEvent.TimeLimiterDisposed
 
     public suspend fun <T>execute(block: suspend () -> T): T? {
         if (data.timeout == Duration.ZERO) return block()

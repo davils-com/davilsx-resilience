@@ -17,7 +17,7 @@
 package com.davils.resilience.retry.predicate.result
 
 import com.davils.kore.annotation.KoreDsl
-import com.davils.kore.pattern.dsl.validation.DslValidator
+import com.davils.kore.pattern.creational.dsl.validation.DslValidator
 
 /**
  * A builder class for creating instances of [ResultPredicateData].

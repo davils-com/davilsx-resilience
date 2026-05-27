@@ -17,7 +17,7 @@
 package com.davils.resilience.retry
 
 import com.davils.kore.annotation.KoreDsl
-import com.davils.kore.pattern.dsl.validation.DslValidator
+import com.davils.kore.pattern.creational.dsl.validation.DslValidator
 import com.davils.resilience.retry.event.RetryEventBuilder
 import com.davils.resilience.retry.predicate.Predicate
 import com.davils.resilience.retry.predicate.alwaysRetryOnThrowablePredicate

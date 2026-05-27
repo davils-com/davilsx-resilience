@@ -7,8 +7,8 @@ class ResultPredicateTest : FunSpec({
     context("shouldRetry(throwable)") {
         test("always returns false regardless of input") {
             val predicate = resultPredicate<Int> { retryIf { it < 0 } }
-            predicate.shouldRetry(null) shouldBe false
-            predicate.shouldRetry(RuntimeException()) shouldBe false
+            predicate.shouldRetryOnThrowable(null) shouldBe false
+            predicate.shouldRetryOnThrowable(RuntimeException()) shouldBe false
         }
     }
 

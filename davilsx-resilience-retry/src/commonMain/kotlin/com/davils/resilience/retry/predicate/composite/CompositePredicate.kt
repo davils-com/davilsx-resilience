@@ -55,9 +55,9 @@ public class CompositePredicate internal constructor(
      * @return true when the composition of all delegate decisions indicates that a retry should be attempted, false otherwise.
      * @since 1.0.0
      */
-    override fun shouldRetry(throwable: Throwable?): Boolean = when (mode) {
-        CombineMode.ANY -> predicates.any { it.shouldRetry(throwable) }
-        CombineMode.ALL -> predicates.all { it.shouldRetry(throwable) }
+    override fun shouldRetryOnThrowable(throwable: Throwable?): Boolean = when (mode) {
+        CombineMode.ANY -> predicates.any { it.shouldRetryOnThrowable(throwable) }
+        CombineMode.ALL -> predicates.all { it.shouldRetryOnThrowable(throwable) }
     }
 
     /**

@@ -16,7 +16,8 @@
 
 package com.davils.resilience.common.registry
 
-import com.davils.resilience.common.DisposableAsync
+import com.davils.kore.pattern.functional.loan.DisposableAsync
+import com.davils.resilience.common.ResilienceComponent
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -32,7 +33,7 @@ import kotlinx.coroutines.sync.withLock
  * @param T The type of items stored in the registry, which must implement [DisposableAsync].
  * @since 1.0.0
  */
-public abstract class Registry<T : DisposableAsync> : DisposableAsync {
+public abstract class Registry<T : ResilienceComponent<*>> : DisposableAsync {
     private val mutex = Mutex()
     private val registry = mutableMapOf<String, T>()
 

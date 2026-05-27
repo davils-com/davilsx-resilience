@@ -10,19 +10,19 @@ class AlwaysRetryOnThrowablePredicateTest : FunSpec({
 
             test("returns true for any non-null throwable") {
                 val predicate = AlwaysRetryOnThrowablePredicate()
-                predicate.shouldRetry(RuntimeException()) shouldBe true
+                predicate.shouldRetryOnThrowable(RuntimeException()) shouldBe true
             }
 
             test("returns true for any throwable subtype") {
                 val predicate = AlwaysRetryOnThrowablePredicate()
-                predicate.shouldRetry(IllegalArgumentException()) shouldBe true
-                predicate.shouldRetry(NullPointerException()) shouldBe true
-                predicate.shouldRetry(Error()) shouldBe true
+                predicate.shouldRetryOnThrowable(IllegalArgumentException()) shouldBe true
+                predicate.shouldRetryOnThrowable(NullPointerException()) shouldBe true
+                predicate.shouldRetryOnThrowable(Error()) shouldBe true
             }
 
             test("returns false for null throwable") {
                 val predicate = AlwaysRetryOnThrowablePredicate()
-                predicate.shouldRetry(null) shouldBe false
+                predicate.shouldRetryOnThrowable(null) shouldBe false
             }
         }
     }
@@ -35,12 +35,12 @@ class AlwaysRetryOnThrowablePredicateTest : FunSpec({
 
         test("created instance returns true for non-null throwable") {
             val predicate = alwaysRetryOnThrowablePredicate()
-            predicate.shouldRetry(RuntimeException()) shouldBe true
+            predicate.shouldRetryOnThrowable(RuntimeException()) shouldBe true
         }
 
         test("created instance returns false for null throwable") {
             val predicate = alwaysRetryOnThrowablePredicate()
-            predicate.shouldRetry(null) shouldBe false
+            predicate.shouldRetryOnThrowable(null) shouldBe false
         }
     }
 })

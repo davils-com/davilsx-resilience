@@ -8,7 +8,7 @@ class ThrowablePredicateCauseChainTest : FunSpec({
         test("does not match wrapped cause") {
             val predicate = throwablePredicate { throwable(IllegalStateException::class) }
             val wrapped = RuntimeException("outer", IllegalStateException("inner"))
-            predicate.shouldRetry(wrapped) shouldBe false
+            predicate.shouldRetryOnThrowable(wrapped) shouldBe false
         }
     }
 
@@ -19,7 +19,7 @@ class ThrowablePredicateCauseChainTest : FunSpec({
                 causeChain()
             }
             val wrapped = RuntimeException("outer", IllegalStateException("inner"))
-            predicate.shouldRetry(wrapped) shouldBe true
+            predicate.shouldRetryOnThrowable(wrapped) shouldBe true
         }
 
         test("matches deeply nested causes") {
@@ -31,7 +31,7 @@ class ThrowablePredicateCauseChainTest : FunSpec({
                 "level1",
                 IllegalStateException("level2", NumberFormatException("inner"))
             )
-            predicate.shouldRetry(deep) shouldBe true
+            predicate.shouldRetryOnThrowable(deep) shouldBe true
         }
 
         test("ignore list wins over cause chain match") {
@@ -44,7 +44,7 @@ class ThrowablePredicateCauseChainTest : FunSpec({
                 "outer",
                 IllegalStateException("inner")
             )
-            predicate.shouldRetry(wrapped) shouldBe false
+            predicate.shouldRetryOnThrowable(wrapped) shouldBe false
         }
 
         test("retryOnAll combined with cause-chain ignores wrapped excluded type") {
@@ -54,7 +54,7 @@ class ThrowablePredicateCauseChainTest : FunSpec({
                 causeChain()
             }
             val wrapped = RuntimeException("outer", IllegalArgumentException("inner"))
-            predicate.shouldRetry(wrapped) shouldBe false
+            predicate.shouldRetryOnThrowable(wrapped) shouldBe false
         }
 
         test("returns false when neither throwable nor any cause matches") {
@@ -63,7 +63,7 @@ class ThrowablePredicateCauseChainTest : FunSpec({
                 causeChain()
             }
             val wrapped = RuntimeException("outer", IllegalStateException("inner"))
-            predicate.shouldRetry(wrapped) shouldBe false
+            predicate.shouldRetryOnThrowable(wrapped) shouldBe false
         }
 
         test("handles self-referencing cause without infinite loop") {
@@ -74,7 +74,7 @@ class ThrowablePredicateCauseChainTest : FunSpec({
             val selfRef = RuntimeException("self")
             // Build artificial self-reference by chaining.
             val chained = RuntimeException("outer", selfRef)
-            predicate.shouldRetry(chained) shouldBe false
+            predicate.shouldRetryOnThrowable(chained) shouldBe false
         }
     }
 })

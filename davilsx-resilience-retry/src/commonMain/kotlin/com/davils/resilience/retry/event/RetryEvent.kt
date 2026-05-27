@@ -16,6 +16,7 @@
 
 package com.davils.resilience.retry.event
 
+import com.davils.kore.pattern.reactive.event.EventMarker
 import com.davils.resilience.common.event.ResilienceEvent
 import kotlinx.coroutines.CancellationException
 import kotlin.time.Duration
@@ -28,7 +29,7 @@ import kotlin.time.Duration
  *
  * @since 1.0.0
  */
-public sealed class RetryEvent : ResilienceEvent() {
+public sealed class RetryEvent : EventMarker() {
     /**
      * Emitted when a single retry attempt has failed with an exception.
      *

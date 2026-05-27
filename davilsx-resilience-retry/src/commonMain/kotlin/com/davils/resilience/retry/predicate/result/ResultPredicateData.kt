@@ -16,9 +16,9 @@
 
 package com.davils.resilience.retry.predicate.result
 
-import com.davils.kore.pattern.dsl.verification.DslVerifiableData
-import com.davils.kore.pattern.dsl.verification.DslVerification
-import com.davils.kore.pattern.dsl.verification.verifyDsl
+import com.davils.kore.pattern.creational.dsl.verification.DslVerifiableData
+import com.davils.kore.pattern.creational.dsl.verification.DslVerification
+import com.davils.kore.pattern.creational.dsl.verification.verifyDsl
 
 /**
  * Data class containing the configuration for a result-based retry predicate.

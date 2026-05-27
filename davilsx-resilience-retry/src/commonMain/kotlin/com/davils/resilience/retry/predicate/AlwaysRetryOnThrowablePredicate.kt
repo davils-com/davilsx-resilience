@@ -32,7 +32,7 @@ public class AlwaysRetryOnThrowablePredicate internal constructor() : Predicate 
      * @return true if [throwable] is not null, false otherwise.
      * @since 1.0.0
      */
-    override fun shouldRetry(throwable: Throwable?): Boolean = throwable != null
+    override fun shouldRetryOnThrowable(throwable: Throwable?): Boolean = throwable != null
 }
 
 /**

@@ -16,7 +16,7 @@
 
 package com.davils.resilience.common.registry
 
-import com.davils.resilience.common.DisposableAsync
+import com.davils.resilience.common.ResilienceComponent
 
 /**
  * Represents an item stored in a [Registry].
@@ -24,10 +24,10 @@ import com.davils.resilience.common.DisposableAsync
  * This data class pairs a unique name with an asynchronous disposable item.
  * It is used for bulk operations and convenient item management within the registry.
  *
- * @param T The type of the item, which must implement [DisposableAsync].
+ * @param T The type of the item, which must implement [ResilienceComponent].
  * @since 1.0.0
  */
-public data class RegistryItem<T : DisposableAsync>(
+public data class RegistryItem<T : ResilienceComponent<*>>(
     /**
      * The unique name associated with the registry item.
      *
@@ -40,7 +40,7 @@ public data class RegistryItem<T : DisposableAsync>(
     /**
      * The actual item instance stored in the registry.
      *
-     * The item implements [DisposableAsync] and will be disposed of when removed from the registry.
+     * The item implements [ResilienceComponent] and will be disposed of when removed from the registry.
      *
      * @since 1.0.0
      */

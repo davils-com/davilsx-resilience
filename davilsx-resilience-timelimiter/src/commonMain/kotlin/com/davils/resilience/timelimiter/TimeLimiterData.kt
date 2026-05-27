@@ -1,8 +1,8 @@
 package com.davils.resilience.timelimiter
 
-import com.davils.kore.pattern.dsl.verification.DslVerifiableData
-import com.davils.kore.pattern.dsl.verification.DslVerification
-import com.davils.kore.pattern.dsl.verification.verifyDsl
+import com.davils.kore.pattern.creational.dsl.verification.DslVerifiableData
+import com.davils.kore.pattern.creational.dsl.verification.DslVerification
+import com.davils.kore.pattern.creational.dsl.verification.verifyDsl
 import com.davils.resilience.common.event.ResilienceEventData
 import kotlin.time.Duration
 

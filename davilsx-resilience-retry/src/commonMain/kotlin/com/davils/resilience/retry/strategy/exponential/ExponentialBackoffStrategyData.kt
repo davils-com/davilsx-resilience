@@ -16,9 +16,9 @@
 
 package com.davils.resilience.retry.strategy.exponential
 
-import com.davils.kore.pattern.dsl.verification.DslVerifiableData
-import com.davils.kore.pattern.dsl.verification.DslVerification
-import com.davils.kore.pattern.dsl.verification.verifyDsl
+import com.davils.kore.pattern.creational.dsl.verification.DslVerifiableData
+import com.davils.kore.pattern.creational.dsl.verification.DslVerification
+import com.davils.kore.pattern.creational.dsl.verification.verifyDsl
 import kotlin.time.Duration
 
 /**

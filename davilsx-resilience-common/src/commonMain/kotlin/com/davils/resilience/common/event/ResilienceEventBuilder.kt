@@ -1,5 +1,6 @@
 package com.davils.resilience.common.event
 
+import com.davils.kore.pattern.creational.dsl.validation.DslValidator
 import com.davils.kore.pattern.dsl.validation.DslValidator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

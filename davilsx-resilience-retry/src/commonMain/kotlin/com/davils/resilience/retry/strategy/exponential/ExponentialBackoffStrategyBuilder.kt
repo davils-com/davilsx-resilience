@@ -17,7 +17,7 @@
 package com.davils.resilience.retry.strategy.exponential
 
 import com.davils.kore.annotation.KoreDsl
-import com.davils.kore.pattern.dsl.validation.DslValidator
+import com.davils.kore.pattern.creational.dsl.validation.DslValidator
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 

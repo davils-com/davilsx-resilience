@@ -38,7 +38,7 @@ public interface Predicate {
      * @return true if the operation should be retried, false otherwise.
      * @since 1.0.0
      */
-    public fun shouldRetry(throwable: Throwable?): Boolean
+    public fun shouldRetryOnThrowable(throwable: Throwable?): Boolean
 
     /**
      * Determines whether a retry should be attempted based on the given successful result value.

@@ -16,14 +16,13 @@
 
 package com.davils.resilience.retry
 
-import com.davils.kore.pattern.event.EventBus
-import com.davils.kore.pattern.event.eventBus
-import com.davils.resilience.common.DisposableAsync
+import com.davils.kore.pattern.reactive.event.EventBus
+import com.davils.kore.pattern.reactive.event.eventBus
+import com.davils.resilience.common.ResilienceComponent
 import com.davils.resilience.retry.event.RetryEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
@@ -39,18 +38,19 @@ import kotlin.time.Duration
  *
  * @since 1.0.0
  */
-public class Retry internal constructor(private val data: RetryData) : DisposableAsync<RetryEvent>() {
+public class Retry internal constructor(private val data: RetryData) : ResilienceComponent<RetryEvent>() {
+    override val disposeEvent: RetryEvent
+        get() = RetryEvent.RetryDisposed
+
     override val eventBus: EventBus<RetryEvent> = eventBus(data.eventData.scope) {
         replay = data.eventData.replay
         onError = data.eventData.onError
         overflowStrategy = data.eventData.overflowStrategy
         extraBufferCapacity = data.eventData.extraBufferCapacity
     }
-    override val disposedEvent: RetryEvent
-        get() = RetryEvent.RetryDisposed
 
     private fun shouldRetryOnThrowable(attempt: Int, throwable: Throwable): Boolean {
-        if (!data.predicate.shouldRetry(throwable)) return false
+        if (!data.predicate.shouldRetryOnThrowable(throwable)) return false
         if (attempt >= data.maxAttempts && data.failAfterMaxRetries) return false
         return true
     }
@@ -89,10 +89,8 @@ public class Retry internal constructor(private val data: RetryData) : Disposabl
         var attempt = 1
 
         while (true) {
-            mutex.withLock {
-                if (isDisposed) {
-                    throw CancellationException("Retry is disposed")
-                }
+            if (isDisposed()) {
+                throw CancellationException("Retry instance is disposed")
             }
 
             eventBus.push(RetryEvent.RetryAttemptStarted(attempt))

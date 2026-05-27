@@ -44,7 +44,7 @@ public class ThrowablePredicate internal constructor(private val data: Throwable
      * matches any of the configured retry types and none of the ignore types, false otherwise.
      * @since 1.0.0
      */
-    override fun shouldRetry(throwable: Throwable?): Boolean {
+    override fun shouldRetryOnThrowable(throwable: Throwable?): Boolean {
         if (throwable == null) return false
         if (matchesAny(throwable, data.ignoreThrowables)) return false
         if (data.retryOnAll) return true
