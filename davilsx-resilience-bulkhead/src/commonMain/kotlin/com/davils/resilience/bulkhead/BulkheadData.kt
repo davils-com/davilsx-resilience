@@ -31,8 +31,6 @@ public data class BulkheadData internal constructor(
 
     public var maxWaitDuration: Duration = 500.milliseconds
 
-
-
     override fun validate(): DslVerification = verifyDsl {
         TODO("Not yet implemented")
     }

@@ -1,0 +1,3 @@
+plugins {
+    `resilience-core-jvm`
+}

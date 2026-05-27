@@ -27,7 +27,7 @@ group = Project.Identity.GROUP
 kreate {
     project {
         platform {
-            javaVersion = JavaVersion.VERSION_25
+            javaVersion = JavaVersion.VERSION_17
             explicitApi = true
             allWarningsAsErrors = true
         }

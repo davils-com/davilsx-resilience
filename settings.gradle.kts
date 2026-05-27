@@ -11,5 +11,7 @@ include(":davilsx-resilience-micrometer")
 include(":davilsx-resilience-ktor")
 include(":davilsx-resilience-metrics")
 
+// Example
 include(":davilsx-resilience-example")
 include(":davilsx-resilience-example:example-retry")
+include(":davilsx-resilience-example:example-bulkhead")
