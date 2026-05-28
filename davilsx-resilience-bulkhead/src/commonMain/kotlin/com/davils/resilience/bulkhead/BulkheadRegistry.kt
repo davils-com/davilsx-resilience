@@ -16,6 +16,7 @@
 
 package com.davils.resilience.bulkhead
 
+import com.davils.resilience.bulkhead.event.BulkheadEvent
 import com.davils.resilience.common.registry.ResilienceRegistry
 
 /**
@@ -25,4 +26,21 @@ import com.davils.resilience.common.registry.ResilienceRegistry
  *
  * @since 1.0.0
  */
-public object BulkheadRegistry : ResilienceRegistry<Bulkhead>()
+public object BulkheadRegistry : ResilienceRegistry<BulkheadEvent, BulkheadData, BulkheadBuilder, Bulkhead>() {
+    override val componentBuilder: BulkheadBuilder = BulkheadBuilder()
+
+    override fun default(builder: BulkheadBuilder.() -> Unit) {
+        componentBuilder.apply(builder)
+    }
+
+    override fun create(builder: (BulkheadBuilder.() -> Unit)?): Bulkhead {
+        if (builder == null) {
+            val data = componentBuilder.produce()
+            return Bulkhead(data)
+        }
+        return bulkhead(builder)
+    }
+
+
+}
+

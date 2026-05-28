@@ -17,7 +17,10 @@
 package com.davils.resilience.common.registry
 
 import com.davils.kore.pattern.functional.loan.DisposableAsync
+import com.davils.kore.pattern.reactive.event.EventMarker
 import com.davils.resilience.common.ResilienceComponent
+import com.davils.resilience.common.ResilienceComponentBuilder
+import com.davils.resilience.common.ResilienceComponentData
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -30,34 +33,41 @@ import kotlinx.coroutines.sync.withLock
  *
  * The registry enforces name constraints using a regular expression.
  *
- * @param T The type of items stored in the registry, which must implement [DisposableAsync].
  * @since 1.0.0
  */
-public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : DisposableAsync {
+public abstract class ResilienceRegistry<
+        E : EventMarker,
+        D : ResilienceComponentData,
+        B : ResilienceComponentBuilder<D>,
+        C : ResilienceComponent<D, E>
+> : DisposableAsync {
+    protected abstract val componentBuilder: B
+    public abstract fun default(builder: B.() -> Unit)
+    public abstract fun create(builder: (B.() -> Unit)? = null): C
     private val mutex = Mutex()
-    private val registry = mutableMapOf<String, T>()
+    private val registry = mutableMapOf<String, C>()
 
     private suspend inline fun <R> withLock(
-        block: (MutableMap<String, T>) -> R
+        block: (MutableMap<String, C>) -> R
     ): R = mutex.withLock {
         block(registry)
     }
 
-    private fun putUnsafe(map: MutableMap<String, T>, name: String, item: T): Boolean {
+    private fun putUnsafe(map: MutableMap<String, C>, name: String, item: C): Boolean {
         if (map.containsKey(name)) return false
         map[name] = item
         return true
     }
 
-    private fun removeUnsafe(map: MutableMap<String, T>, name: String): T? {
+    private fun removeUnsafe(map: MutableMap<String, C>, name: String): C? {
         return map.remove(name)
     }
 
-    private fun lookupUnsafe(map: MutableMap<String, T>, name: String): T? {
+    private fun lookupUnsafe(map: MutableMap<String, C>, name: String): C? {
         return map[name]
     }
 
-    private fun existsUnsafe(map: MutableMap<String, T>, name: String): Boolean {
+    private fun existsUnsafe(map: MutableMap<String, C>, name: String): Boolean {
         return map.containsKey(name)
     }
 
@@ -81,7 +91,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @throws IllegalArgumentException If the name does not match the required naming convention.
      * @since 1.0.0
      */
-    public suspend fun put(name: String, item: T): Boolean {
+    public suspend fun put(name: String, item: C): Boolean {
         validateName(name)
         return withLock { map ->
             putUnsafe(map, name, item)
@@ -98,7 +108,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @throws IllegalArgumentException If the name does not match the required naming convention.
      * @since 1.0.0
      */
-    public suspend fun put(item: ResilienceRegistryItem<T>): Boolean = put(item.name, item.item)
+    public suspend fun put(item: ResilienceRegistryItem<C>): Boolean = put(item.name, item.item)
 
     /**
      * Adds an item to the registry if the specified condition is met.
@@ -113,7 +123,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @throws IllegalArgumentException If the name does not match the required naming convention.
      * @since 1.0.0
      */
-    public suspend fun putIf(name: String, item: T, condition: (name: String, item: T) -> Boolean): Boolean {
+    public suspend fun putIf(name: String, item: C, condition: (name: String, item: C) -> Boolean): Boolean {
         validateName(name)
         return withLock { map ->
             if (!condition(name, item)) return@withLock false
@@ -131,7 +141,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @throws IllegalArgumentException If any name is invalid or if any item already exists in the registry.
      * @since 1.0.0
      */
-    public suspend fun putAll(items: Map<String, T>) {
+    public suspend fun putAll(items: Map<String, C>) {
         items.keys.forEach { validateName(it) }
 
         withLock { map ->
@@ -149,7 +159,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @throws IllegalArgumentException If any name is invalid or if any item already exists in the registry.
      * @since 1.0.0
      */
-    public suspend fun putAll(items: Iterable<ResilienceRegistryItem<T>>) {
+    public suspend fun putAll(items: Iterable<ResilienceRegistryItem<C>>) {
         putAll(items.associate { it.name to it.item })
     }
 
@@ -160,7 +170,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @throws IllegalArgumentException If any name is invalid or if any item already exists in the registry.
      * @since 1.0.0
      */
-    public suspend fun putAll(vararg items: ResilienceRegistryItem<T>) {
+    public suspend fun putAll(vararg items: ResilienceRegistryItem<C>) {
         putAll(items.asIterable())
     }
 
@@ -171,7 +181,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @return The item associated with the name, or null if it was not found.
      * @since 1.0.0
      */
-    public suspend fun lookupOrNull(name: String): T? {
+    public suspend fun lookupOrNull(name: String): C? {
         return withLock { map ->
             lookupUnsafe(map, name)
         }
@@ -185,7 +195,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @throws IllegalArgumentException If no item with the given name is found.
      * @since 1.0.0
      */
-    public suspend fun lookup(name: String): T {
+    public suspend fun lookup(name: String): C {
         return lookupOrNull(name) ?: throw IllegalArgumentException("No item with name $name found in the registry")
     }
 
@@ -268,7 +278,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      */
     public suspend fun removeIf(
         name: String,
-        condition: (T) -> Boolean
+        condition: (C) -> Boolean
     ): Boolean {
         val removed = withLock { map ->
             val item = lookupUnsafe(map, name) ?: return@withLock null
@@ -280,6 +290,35 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
         return removed != null
     }
 
+    public suspend fun getOrCreate(name: String, builder: (B.() -> Unit )? = null): C {
+        validateName(name)
+
+        return withLock { map ->
+            val item = lookupUnsafe(map, name)
+            if (item != null) return@withLock item
+
+            val newItem = create(builder)
+            putUnsafe(map, name, newItem)
+            return@withLock newItem
+        }
+    }
+
+    public suspend fun getOrCreateIf(name: String, condition: (C) -> Boolean, builder: (B.() -> Unit)? = null): C {
+        validateName(name)
+
+        return withLock { map ->
+            val item = lookupUnsafe(map, name)
+            if (item != null) {
+                require(condition(item)) { "Existing registry item '$name' does not satisfy the condition" }
+                return@withLock item
+            }
+
+            val newItem = create(builder)
+            putUnsafe(map, name, newItem)
+            return@withLock newItem
+        }
+    }
+
 
     /**
      * Operator for retrieving an item from the registry.
@@ -289,7 +328,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @throws IllegalArgumentException If no item with the given name is found.
      * @since 1.0.0
      */
-    public suspend operator fun get(name: String): T {
+    public suspend operator fun get(name: String): C {
         return lookupOrNull(name) ?: throw IllegalArgumentException("No item with name $name found in the registry")
     }
 
@@ -300,7 +339,7 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
      * @throws IllegalArgumentException If the name is invalid.
      * @since 1.0.0
      */
-    public suspend operator fun plusAssign(item: ResilienceRegistryItem<T>) {
+    public suspend operator fun plusAssign(item: ResilienceRegistryItem<C>) {
         put(item)
     }
 
@@ -326,6 +365,6 @@ public abstract class ResilienceRegistry<T : ResilienceComponent<*, *>> : Dispos
     }
 
     private companion object {
-        val NAME_REGEX = Regex("^[a-z]+(-[a-z]+)*$")
+        val NAME_REGEX = Regex("^[a-zA-Z0-9][a-zA-Z0-9._:-]*$")
     }
 }
