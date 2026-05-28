@@ -75,6 +75,18 @@ public abstract class ResilienceRegistry<
         require(name.matches(NAME_REGEX)) { "Registry item name must match regex: $NAME_REGEX" }
     }
 
+    private suspend fun disposeAll(items: Iterable<C>) {
+        var firstException: Throwable? = null
+        items.forEach {
+            try {
+                it.dispose()
+            } catch (t: Throwable) {
+                if (firstException == null) firstException = t
+            }
+        }
+        firstException?.let { throw it }
+    }
+
     override suspend fun dispose() {
         clear()
     }
@@ -82,8 +94,24 @@ public abstract class ResilienceRegistry<
     /**
      * Adds an item to the registry with the specified name.
      *
+     * The name must match the required naming convention.
+     *
+     * @param name The unique name to associate with the item.
+     * @param item The item instance to store in the registry.
+     * @throws IllegalArgumentException If the name is invalid or if an item with the same name already exists.
+     * @since 1.0.0
+     */
+    public suspend fun put(name: String, item: C) {
+        if (!tryPut(name, item)) {
+            throw IllegalArgumentException("Item with name '$name' already exists in the registry")
+        }
+    }
+
+    /**
+     * Attempts to add an item to the registry with the specified name.
+     *
      * The name must match the required naming convention. If an item with the same name
-     * already exists, the operation will fail and return false.
+     * already exists, the operation will return false without adding the item.
      *
      * @param name The unique name to associate with the item.
      * @param item The item instance to store in the registry.
@@ -91,7 +119,7 @@ public abstract class ResilienceRegistry<
      * @throws IllegalArgumentException If the name does not match the required naming convention.
      * @since 1.0.0
      */
-    public suspend fun put(name: String, item: C): Boolean {
+    public suspend fun tryPut(name: String, item: C): Boolean {
         validateName(name)
         return withLock { map ->
             putUnsafe(map, name, item)
@@ -104,26 +132,60 @@ public abstract class ResilienceRegistry<
      * This is a convenience method that uses the name and item from the provided [ResilienceRegistryItem].
      *
      * @param item The [ResilienceRegistryItem] containing the name and the item instance.
-     * @return True if the item was successfully added, false if an item with the same name already exists.
-     * @throws IllegalArgumentException If the name does not match the required naming convention.
+     * @throws IllegalArgumentException If the name is invalid or if an item with the same name already exists.
      * @since 1.0.0
      */
-    public suspend fun put(item: ResilienceRegistryItem<C>): Boolean = put(item.name, item.item)
+    public suspend fun put(item: ResilienceRegistryItem<C>) {
+        put(item.name, item.item)
+    }
+
+    /**
+     * Attempts to add a [ResilienceRegistryItem] to the registry.
+     *
+     * @param item The [ResilienceRegistryItem] containing the name and the item instance.
+     * @return True if the item was successfully added, false if an item with the same name already exists.
+     * @throws IllegalArgumentException If the name is invalid.
+     * @since 1.0.0
+     */
+    public suspend fun tryPut(item: ResilienceRegistryItem<C>): Boolean = tryPut(item.name, item.item)
 
     /**
      * Adds an item to the registry if the specified condition is met.
      *
-     * The name must match the required naming convention. If the condition returns false
-     * or if an item with the same name already exists, the item will not be added.
+     * The name must match the required naming convention. If the condition returns false,
+     * the item will not be added and the method returns false.
      *
      * @param name The unique name to associate with the item.
      * @param item The item instance to store in the registry.
      * @param condition A lambda that determines whether the item should be added based on its name and value.
      * @return True if the item was successfully added, false otherwise.
-     * @throws IllegalArgumentException If the name does not match the required naming convention.
+     * @throws IllegalArgumentException If the name is invalid or if an item with the same name already exists.
      * @since 1.0.0
      */
     public suspend fun putIf(name: String, item: C, condition: (name: String, item: C) -> Boolean): Boolean {
+        validateName(name)
+        return withLock { map ->
+            if (existsUnsafe(map, name)) {
+                throw IllegalArgumentException("Item with name '$name' already exists in the registry")
+            }
+            if (!condition(name, item)) return@withLock false
+            putUnsafe(map, name, item)
+        }
+    }
+
+    /**
+     * Attempts to add an item to the registry if the specified condition is met.
+     *
+     * If the item already exists, this method returns false.
+     *
+     * @param name The unique name to associate with the item.
+     * @param item The item instance to store in the registry.
+     * @param condition A lambda that determines whether the item should be added based on its name and value.
+     * @return True if the item was successfully added, false otherwise.
+     * @throws IllegalArgumentException If the name is invalid.
+     * @since 1.0.0
+     */
+    public suspend fun tryPutIf(name: String, item: C, condition: (name: String, item: C) -> Boolean): Boolean {
         validateName(name)
         return withLock { map ->
             if (!condition(name, item)) return@withLock false
@@ -142,13 +204,31 @@ public abstract class ResilienceRegistry<
      * @since 1.0.0
      */
     public suspend fun putAll(items: Map<String, C>) {
+        if (!tryPutAll(items)) {
+            throw IllegalArgumentException("Some items already exist in the registry")
+        }
+    }
+
+    /**
+     * Attempts to add multiple items to the registry from a map.
+     *
+     * All names must match the required naming convention. If any of the items already exist
+     * in the registry, the operation returns false and none of the items are added.
+     *
+     * @param items A map where keys are unique names and values are the items to store.
+     * @return True if all items were successfully added, false if any item already exists.
+     * @throws IllegalArgumentException If any name is invalid.
+     * @since 1.0.0
+     */
+    public suspend fun tryPutAll(items: Map<String, C>): Boolean {
         items.keys.forEach { validateName(it) }
 
-        withLock { map ->
+        return withLock { map ->
             if (items.keys.any { it in map }) {
-                throw IllegalArgumentException("Some items already exist in the registry")
+                return@withLock false
             }
             map.putAll(items)
+            true
         }
     }
 
@@ -164,6 +244,18 @@ public abstract class ResilienceRegistry<
     }
 
     /**
+     * Attempts to add multiple items to the registry from an iterable of [ResilienceRegistryItem].
+     *
+     * @param items An iterable containing [ResilienceRegistryItem] instances to be added.
+     * @return True if all items were successfully added, false if any item already exists.
+     * @throws IllegalArgumentException If any name is invalid.
+     * @since 1.0.0
+     */
+    public suspend fun tryPutAll(items: Iterable<ResilienceRegistryItem<C>>): Boolean {
+        return tryPutAll(items.associate { it.name to it.item })
+    }
+
+    /**
      * Adds multiple items to the registry provided as varargs.
      *
      * @param items Variable number of [ResilienceRegistryItem] instances to be added.
@@ -172,6 +264,18 @@ public abstract class ResilienceRegistry<
      */
     public suspend fun putAll(vararg items: ResilienceRegistryItem<C>) {
         putAll(items.asIterable())
+    }
+
+    /**
+     * Attempts to add multiple items to the registry provided as varargs.
+     *
+     * @param items Variable number of [ResilienceRegistryItem] instances to be added.
+     * @return True if all items were successfully added, false if any item already exists.
+     * @throws IllegalArgumentException If any name is invalid.
+     * @since 1.0.0
+     */
+    public suspend fun tryPutAll(vararg items: ResilienceRegistryItem<C>): Boolean {
+        return tryPutAll(items.asIterable())
     }
 
     /**
@@ -238,7 +342,7 @@ public abstract class ResilienceRegistry<
         val removedItems = withLock { map ->
             names.mapNotNull { removeUnsafe(map, it) }
         }
-        removedItems.forEach { it.dispose() }
+        disposeAll(removedItems)
     }
 
     /**
@@ -265,7 +369,7 @@ public abstract class ResilienceRegistry<
             items
         }
 
-        removedItems.forEach { it.dispose() }
+        disposeAll(removedItems)
     }
 
     /**
@@ -290,6 +394,58 @@ public abstract class ResilienceRegistry<
         return removed != null
     }
 
+    /**
+     * Returns a set of all names registered in the registry.
+     *
+     * @return A set containing all item names.
+     * @since 1.0.0
+     */
+    public suspend fun names(): Set<String> = withLock { it.keys.toSet() }
+
+    /**
+     * Returns a list of all items registered in the registry.
+     *
+     * @return A list containing all items.
+     * @since 1.0.0
+     */
+    public suspend fun values(): List<C> = withLock { it.values.toList() }
+
+    /**
+     * Returns the number of items in the registry.
+     *
+     * @return The count of registered items.
+     * @since 1.0.0
+     */
+    public suspend fun size(): Int = withLock { it.size }
+
+    /**
+     * Checks if the registry is empty.
+     *
+     * @return True if there are no items, false otherwise.
+     * @since 1.0.0
+     */
+    public suspend fun isEmpty(): Boolean = withLock { it.isEmpty() }
+
+    /**
+     * Retrieves an item from the registry by its name, or null if no such item exists.
+     *
+     * Alias for [lookupOrNull].
+     *
+     * @param name The name of the item to look up.
+     * @return The item associated with the name, or null if it was not found.
+     * @since 1.0.0
+     */
+    public suspend fun getOrNull(name: String): C? = lookupOrNull(name)
+
+    /**
+     * Retrieves an item from the registry by its name, or creates it if it doesn't exist.
+     *
+     * @param name The unique name of the item.
+     * @param builder An optional configuration builder block for creating a new item.
+     * @return The existing or newly created item.
+     * @throws IllegalArgumentException If the name is invalid.
+     * @since 1.0.0
+     */
     public suspend fun getOrCreate(name: String, builder: (B.() -> Unit )? = null): C {
         validateName(name)
 
@@ -303,6 +459,17 @@ public abstract class ResilienceRegistry<
         }
     }
 
+    /**
+     * Retrieves an item from the registry by its name, or creates it if it doesn't exist,
+     * provided the existing item satisfies the given condition.
+     *
+     * @param name The unique name of the item.
+     * @param condition A lambda that checks the existing item.
+     * @param builder An optional configuration builder block for creating a new item.
+     * @return The existing or newly created item.
+     * @throws IllegalArgumentException If the existing item does not satisfy the condition.
+     * @since 1.0.0
+     */
     public suspend fun getOrCreateIf(name: String, condition: (C) -> Boolean, builder: (B.() -> Unit)? = null): C {
         validateName(name)
 
@@ -317,6 +484,47 @@ public abstract class ResilienceRegistry<
             putUnsafe(map, name, newItem)
             return@withLock newItem
         }
+    }
+
+    /**
+     * Creates and registers a new item in the registry using the provided builder.
+     *
+     * @param name The unique name to associate with the item.
+     * @param builder An optional configuration builder block.
+     * @return The newly created item.
+     * @throws IllegalArgumentException If the name is invalid or if an item with the same name already exists.
+     * @since 1.0.0
+     */
+    public suspend fun create(name: String, builder: (B.() -> Unit)? = null): C {
+        validateName(name)
+        return withLock { map ->
+            if (existsUnsafe(map, name)) {
+                throw IllegalArgumentException("Item with name '$name' already exists in the registry")
+            }
+            val newItem = create(builder)
+            putUnsafe(map, name, newItem)
+            newItem
+        }
+    }
+
+    /**
+     * Adds an item to the registry, replacing any existing item with the same name.
+     *
+     * If an item already exists, it is disposed of before being replaced.
+     *
+     * @param name The unique name to associate with the item.
+     * @param item The item instance to store.
+     * @throws IllegalArgumentException If the name is invalid.
+     * @since 1.0.0
+     */
+    public suspend fun replace(name: String, item: C) {
+        validateName(name)
+        val oldItem = withLock { map ->
+            val existing = map[name]
+            map[name] = item
+            existing
+        }
+        oldItem?.dispose()
     }
 
 
