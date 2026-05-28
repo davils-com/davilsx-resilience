@@ -32,6 +32,12 @@ public data class BulkheadData internal constructor(
     public var maxWaitDuration: Duration = 500.milliseconds
 
     override fun validate(): DslVerification = verifyDsl {
-        TODO("Not yet implemented")
+        if (maxConcurrentCalls < 1) {
+            fail("maxConcurrentCalls must be at least 1", "maxConcurrentCalls")
+        }
+
+        if (maxWaitDuration.isNegative()) {
+            fail("maxWaitDuration must be non-negative", "maxWaitDuration")
+        }
     }
 }

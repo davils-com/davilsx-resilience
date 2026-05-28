@@ -17,13 +17,52 @@
 package com.davils.resilience.bulkhead
 
 import com.davils.resilience.bulkhead.event.BulkheadEvent
+import com.davils.resilience.bulkhead.exception.BulkheadMaxConcurrentCallsException
 import com.davils.resilience.common.ResilienceComponent
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 public class Bulkhead internal constructor(
     override val data: BulkheadData
 ) : ResilienceComponent<BulkheadData, BulkheadEvent>() {
     override val disposeEvent: BulkheadEvent
         get() = BulkheadEvent.BulkheadDispose
+
+    private val semaphore = Semaphore(permits = data.maxConcurrentCalls)
+
+    public suspend fun <T> execute(block: suspend () -> T): T {
+        val acquired = tryAcquireWithTimeout()
+        if (!acquired) {
+            throw BulkheadMaxConcurrentCallsException("Bulkhead max concurrent calls limit of ${data.maxConcurrentCalls} exceeded")
+        }
+
+        return try {
+            block()
+        } finally {
+            semaphore.release()
+        }
+    }
+
+    private suspend fun tryAcquireWithTimeout(): Boolean {
+        if (data.maxWaitDuration == Duration.ZERO){
+            return semaphore.tryAcquire()
+        }
+
+        return try {
+            withTimeout(data.maxWaitDuration) {
+                semaphore.acquire()
+                true
+            }
+        } catch (_: TimeoutCancellationException) {
+            false
+        } catch (_: CancellationException) {
+            false
+        }
+    }
 }
 
 public fun bulkhead(builder: BulkheadBuilder.() -> Unit): Bulkhead {
