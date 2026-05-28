@@ -26,6 +26,13 @@ kotlin {
             }
         }
 
+        commonMain {
+            dependencies {
+                implementation(project(":davilsx-resilience-retry"))
+                implementation(project(":davilsx-resilience-bulkhead"))
+            }
+        }
+
         commonTest {
             dependencies {
                 implementation(libs.bundles.resilience.tests.common.impl)
