@@ -16,7 +16,6 @@
 
 package com.davils.resilience.bulkhead
 
-import com.davils.resilience.bulkhead.event.BulkheadEvent
 import com.davils.resilience.bulkhead.exception.BulkheadMaxConcurrentCallsException
 import com.davils.resilience.common.ResilienceComponent
 import kotlinx.atomicfu.atomic
