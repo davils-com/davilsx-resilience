@@ -18,4 +18,11 @@ package com.davils.resilience.bulkhead
 
 import com.davils.resilience.common.registry.ResilienceRegistry
 
+/**
+ * Registry for managing and retrieving [Bulkhead] instances.
+ *
+ * Ensures that bulkheads are reused and provides a central point for bulkhead management.
+ *
+ * @since 1.0.0
+ */
 public object BulkheadRegistry : ResilienceRegistry<Bulkhead>()

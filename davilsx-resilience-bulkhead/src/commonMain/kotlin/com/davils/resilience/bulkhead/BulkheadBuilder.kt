@@ -21,26 +21,70 @@ import com.davils.resilience.common.ResilienceComponentBuilder
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Builder for creating instances of [BulkheadData].
+ *
+ * Provides a DSL-style API for configuring bulkhead parameters.
+ *
+ * @since 1.0.0
+ */
 @KoreDsl
 public class BulkheadBuilder internal constructor() : ResilienceComponentBuilder<BulkheadData>() {
-    public var maxConcurrentCalls: Int = 3
+    /**
+     * The maximum number of concurrent calls allowed by the bulkhead.
+     *
+     * @since 1.0.0
+     */
+    public var maxConcurrentCalls: Int = 25
 
+    /**
+     * The maximum duration to wait for a permit before failing.
+     *
+     * @since 1.0.0
+     */
     public var maxWaitDuration: Duration = 500.milliseconds
 
+    /**
+     * Sets the maximum number of concurrent calls.
+     *
+     * @param maxConcurrentCalls The maximum number of concurrent calls.
+     * @since 1.0.0
+     */
     public fun maxConcurrentCalls(maxConcurrentCalls: Int) {
         this.maxConcurrentCalls = maxConcurrentCalls
     }
 
+    /**
+     * Sets the maximum duration to wait for a permit.
+     *
+     * @param maxWaitDuration The maximum wait duration.
+     * @since 1.0.0
+     */
     public fun maxWaitDuration(maxWaitDuration: Duration) {
         this.maxWaitDuration = maxWaitDuration
     }
 
+    /**
+     * Sets the maximum duration to wait for a permit in milliseconds.
+     *
+     * @param maxWaitDurationMillis The maximum wait duration in milliseconds.
+     * @since 1.0.0
+     */
     public fun maxWaitDuration(maxWaitDurationMillis: Long) {
         this.maxWaitDuration = maxWaitDurationMillis.milliseconds
     }
 
+    /**
+     * Produces a [BulkheadData] instance based on the current configuration.
+     *
+     * @return A configured [BulkheadData] instance.
+     * @since 1.0.0
+     */
     override fun data(): BulkheadData {
         val eventData = eventBuilder.produce()
-        return BulkheadData(eventData)
+        return BulkheadData(eventData).apply {
+            maxConcurrentCalls = this@BulkheadBuilder.maxConcurrentCalls
+            maxWaitDuration = this@BulkheadBuilder.maxWaitDuration
+        }
     }
 }
