@@ -17,13 +17,17 @@
 package com.davils.resilience.common.registry
 
 import com.davils.kore.pattern.functional.loan.DisposableAsync
+import com.davils.kore.pattern.reactive.event.EventBus
 import com.davils.kore.pattern.reactive.event.EventMarker
+import com.davils.kore.pattern.reactive.event.eventBus
 import com.davils.resilience.common.ResilienceComponent
 import com.davils.resilience.common.ResilienceComponentBuilder
 import com.davils.resilience.common.ResilienceComponentData
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
 /**
  * An abstract base class for managing a registry of asynchronous disposable items.
@@ -42,9 +46,16 @@ public abstract class ResilienceRegistry<
         B : ResilienceComponentBuilder<D>,
         C : ResilienceComponent<D, E>
 > : DisposableAsync {
+    protected abstract val registryData: ResilienceRegistryData
     private val defaultData = atomic<D?>(null)
     private val mutex = Mutex()
     private val registry = mutableMapOf<String, C>()
+    private val eventBus: EventBus<ResilienceRegistryEvent> = eventBus(registryData.eventData.scope) {
+        replay = registryData.eventData.replay
+        onError = registryData.eventData.onError
+        overflowStrategy = registryData.eventData.overflowStrategy
+        extraBufferCapacity = registryData.eventData.extraBufferCapacity
+    }
 
     private suspend inline fun <R> withLock(
         block: (MutableMap<String, C>) -> R
@@ -87,8 +98,40 @@ public abstract class ResilienceRegistry<
     }
 
     override suspend fun dispose() {
+        eventBus.push(ResilienceRegistryEvent.RegistryDisposed)
         clear()
+        eventBus.dispose()
     }
+
+    /**
+     * Subscribes to events of a specific type from the registry's event bus.
+     *
+     * @param R The type of events to subscribe to.
+     * @param eventType The class of the event type.
+     * @param onError An optional error handler for the subscription.
+     * @param on A lambda to be executed when an event of the specified type is emitted.
+     * @return A [Job] representing the subscription.
+     * @since 1.0.0
+     */
+    public fun <R : ResilienceRegistryEvent> subscribe(
+        eventType: KClass<R>,
+        onError: (suspend (Throwable) -> Unit)? = null,
+        on: suspend (R) -> Unit
+    ): Job = eventBus.subscribe(eventType, onError, on)
+
+    /**
+     * Subscribes to events of a specific type from the registry's event bus using reified type parameters.
+     *
+     * @param R The type of events to subscribe to.
+     * @param onError An optional error handler for the subscription.
+     * @param on A lambda to be executed when an event of the specified type is emitted.
+     * @return A [Job] representing the subscription.
+     * @since 1.0.0
+     */
+    public inline fun <reified R : ResilienceRegistryEvent> subscribe(
+        noinline onError: (suspend (Throwable) -> Unit)? = null,
+        noinline on: suspend (R) -> Unit
+    ): Job = subscribe(R::class, onError, on)
 
     /**
      * Creates a new instance of the component builder.
@@ -187,9 +230,13 @@ public abstract class ResilienceRegistry<
      */
     public suspend fun tryPut(name: String, item: C): Boolean {
         validateName(name)
-        return withLock { map ->
+        val added = withLock { map ->
             putUnsafe(map, name, item)
         }
+        if (added) {
+            eventBus.push(ResilienceRegistryEvent.ItemAdded(name, item))
+        }
+        return added
     }
 
     /**
@@ -289,13 +336,20 @@ public abstract class ResilienceRegistry<
     public suspend fun tryPutAll(items: Map<String, C>): Boolean {
         items.keys.forEach { validateName(it) }
 
-        return withLock { map ->
+        val added = withLock { map ->
             if (items.keys.any { it in map }) {
                 return@withLock false
             }
             map.putAll(items)
             true
         }
+
+        if (added) {
+            items.forEach { (name, item) ->
+                eventBus.push(ResilienceRegistryEvent.ItemAdded(name, item))
+            }
+        }
+        return added
     }
 
     /**
@@ -395,7 +449,10 @@ public abstract class ResilienceRegistry<
         val removed = withLock { map ->
             removeUnsafe(map, name)
         }
-        removed?.dispose()
+        removed?.let {
+            eventBus.push(ResilienceRegistryEvent.ItemRemoved(name, it))
+            it.dispose()
+        }
     }
 
     /**
@@ -406,9 +463,14 @@ public abstract class ResilienceRegistry<
      */
     public suspend fun removeAll(names: Iterable<String>) {
         val removedItems = withLock { map ->
-            names.mapNotNull { removeUnsafe(map, it) }
+            names.mapNotNull { name ->
+                removeUnsafe(map, name)?.let { name to it }
+            }
         }
-        disposeAll(removedItems)
+        removedItems.forEach { (name, item) ->
+            eventBus.push(ResilienceRegistryEvent.ItemRemoved(name, item))
+        }
+        disposeAll(removedItems.map { it.second })
     }
 
     /**
@@ -430,12 +492,17 @@ public abstract class ResilienceRegistry<
      */
     public suspend fun clear() {
         val removedItems = withLock { map ->
-            val items = map.values.toList()
+            val entries = map.entries.toList()
             map.clear()
-            items
+            entries
         }
 
-        disposeAll(removedItems)
+        removedItems.forEach { entry ->
+            eventBus.push(ResilienceRegistryEvent.ItemRemoved(entry.key, entry.value))
+        }
+
+        eventBus.push(ResilienceRegistryEvent.RegistryCleared)
+        disposeAll(removedItems.map { it.value })
     }
 
     /**
@@ -456,7 +523,10 @@ public abstract class ResilienceRegistry<
             removeUnsafe(map, name)
         }
 
-        removed?.dispose()
+        removed?.let {
+            eventBus.push(ResilienceRegistryEvent.ItemRemoved(name, it))
+            it.dispose()
+        }
         return removed != null
     }
 
@@ -515,14 +585,21 @@ public abstract class ResilienceRegistry<
     public suspend fun getOrCreate(name: String, builder: (B.() -> Unit )? = null): C {
         validateName(name)
 
-        return withLock { map ->
+        var created = false
+        val item = withLock { map ->
             val item = lookupUnsafe(map, name)
             if (item != null) return@withLock item
 
             val newItem = create(builder)
             putUnsafe(map, name, newItem)
-            return@withLock newItem
+            created = true
+            newItem
         }
+
+        if (created) {
+            eventBus.push(ResilienceRegistryEvent.ItemAdded(name, item))
+        }
+        return item
     }
 
     /**
@@ -539,7 +616,8 @@ public abstract class ResilienceRegistry<
     public suspend fun getOrCreateIf(name: String, condition: (C) -> Boolean, builder: (B.() -> Unit)? = null): C {
         validateName(name)
 
-        return withLock { map ->
+        var created = false
+        val item = withLock { map ->
             val item = lookupUnsafe(map, name)
             if (item != null) {
                 require(condition(item)) { "Existing registry item '$name' does not satisfy the condition" }
@@ -548,8 +626,14 @@ public abstract class ResilienceRegistry<
 
             val newItem = create(builder)
             putUnsafe(map, name, newItem)
-            return@withLock newItem
+            created = true
+            newItem
         }
+
+        if (created) {
+            eventBus.push(ResilienceRegistryEvent.ItemAdded(name, item))
+        }
+        return item
     }
 
     /**
@@ -563,14 +647,16 @@ public abstract class ResilienceRegistry<
      */
     public suspend fun create(name: String, builder: (B.() -> Unit)? = null): C {
         validateName(name)
-        return withLock { map ->
+        val newItem = withLock { map ->
             if (existsUnsafe(map, name)) {
                 throw IllegalArgumentException("Item with name '$name' already exists in the registry")
             }
-            val newItem = create(builder)
-            putUnsafe(map, name, newItem)
-            newItem
+            val item = create(builder)
+            putUnsafe(map, name, item)
+            item
         }
+        eventBus.push(ResilienceRegistryEvent.ItemAdded(name, newItem))
+        return newItem
     }
 
     /**
@@ -590,7 +676,11 @@ public abstract class ResilienceRegistry<
             map[name] = item
             existing
         }
-        oldItem?.dispose()
+        oldItem?.let {
+            eventBus.push(ResilienceRegistryEvent.ItemRemoved(name, it))
+            it.dispose()
+        }
+        eventBus.push(ResilienceRegistryEvent.ItemAdded(name, item))
     }
 
 
