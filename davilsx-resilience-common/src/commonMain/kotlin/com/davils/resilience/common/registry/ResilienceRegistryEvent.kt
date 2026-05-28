@@ -18,6 +18,7 @@ package com.davils.resilience.common.registry
 
 import com.davils.kore.pattern.reactive.event.EventMarker
 import com.davils.resilience.common.ResilienceComponent
+import com.davils.resilience.common.registry.entity.ResilienceRegistryEntry
 
 /**
  * Base class for all events emitted by a [ResilienceRegistry].
@@ -30,27 +31,27 @@ import com.davils.resilience.common.ResilienceComponent
 public sealed class ResilienceRegistryEvent : EventMarker() {
 
     /**
-     * Event emitted when a new component is added to the registry.
+     * Event emitted when a new entry is added to the registry.
      *
-     * @param name The name of the added component.
-     * @param component The component instance that was added.
+     * @param name The name of the added entry.
+     * @param entry The registry entry that was added.
      * @since 1.0.0
      */
-    public data class ItemAdded<C : ResilienceComponent<*, *>>(
+    public data class EntryAdded<C : ResilienceComponent<*, *>>(
         public val name: String,
-        public val component: C
+        public val entry: ResilienceRegistryEntry<C>
     ) : ResilienceRegistryEvent()
 
     /**
-     * Event emitted when a component is removed from the registry.
+     * Event emitted when an entry is removed from the registry.
      *
-     * @param name The name of the removed component.
-     * @param component The component instance that was removed.
+     * @param name The name of the removed entry.
+     * @param entry The registry entry that was removed.
      * @since 1.0.0
      */
-    public data class ItemRemoved<C : ResilienceComponent<*, *>>(
+    public data class EntryRemoved<C : ResilienceComponent<*, *>>(
         public val name: String,
-        public val component: C
+        public val entry: ResilienceRegistryEntry<C>
     ) : ResilienceRegistryEvent()
 
     /**
