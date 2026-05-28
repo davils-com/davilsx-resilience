@@ -17,18 +17,31 @@
 package com.davils.resilience.retry
 
 import com.davils.resilience.common.registry.ResilienceRegistry
+import com.davils.resilience.common.registry.ResilienceRegistryBuilder
+import com.davils.resilience.common.registry.ResilienceRegistryData
 import com.davils.resilience.retry.event.RetryEvent
 
 /**
  * A specialized [ResilienceRegistry] for storing and managing [Retry] instances.
  *
  * This registry allows for centralized management of retry configurations across the application.
- * Being an `object`, it provides a single global point of access for retry mechanisms.
+ * By default, it provides a global instance through the companion object, but multiple instances
+ * can be created for use in different contexts, such as Dependency Injection.
  *
+ * @param registryData Configuration data for the registry.
  * @since 1.0.0
  */
-public object RetryRegistry : ResilienceRegistry<RetryEvent, RetryData, RetryBuilder, Retry>() {
+public class RetryRegistry(
+    override val registryData: ResilienceRegistryData
+) : ResilienceRegistry<RetryEvent, RetryData, RetryBuilder, Retry>() {
     override fun createBuilder(): RetryBuilder = RetryBuilder()
 
     override fun createComponent(data: RetryData): Retry = Retry(data)
+}
+
+public fun retryRegistry(builder: ResilienceRegistryBuilder.() -> Unit): RetryRegistry {
+    val registryBuilder = ResilienceRegistryBuilder()
+    registryBuilder.builder()
+    val data = registryBuilder.produce()
+    return RetryRegistry(data)
 }
