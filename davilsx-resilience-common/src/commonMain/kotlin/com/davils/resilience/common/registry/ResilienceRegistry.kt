@@ -21,6 +21,7 @@ import com.davils.kore.pattern.reactive.event.EventMarker
 import com.davils.resilience.common.ResilienceComponent
 import com.davils.resilience.common.ResilienceComponentBuilder
 import com.davils.resilience.common.ResilienceComponentData
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -41,9 +42,7 @@ public abstract class ResilienceRegistry<
         B : ResilienceComponentBuilder<D>,
         C : ResilienceComponent<D, E>
 > : DisposableAsync {
-    protected abstract val componentBuilder: B
-    public abstract fun default(builder: B.() -> Unit)
-    public abstract fun create(builder: (B.() -> Unit)? = null): C
+    private val defaultData = atomic<D?>(null)
     private val mutex = Mutex()
     private val registry = mutableMapOf<String, C>()
 
@@ -89,6 +88,73 @@ public abstract class ResilienceRegistry<
 
     override suspend fun dispose() {
         clear()
+    }
+
+    /**
+     * Creates a new instance of the component builder.
+     *
+     * @return A new builder instance.
+     * @since 1.0.0
+     */
+    protected abstract fun createBuilder(): B
+
+    /**
+     * Creates a new instance of the component using the provided data.
+     *
+     * @param data The configuration data for the component.
+     * @return A new component instance.
+     * @since 1.0.0
+     */
+    protected abstract fun createComponent(data: D): C
+
+    /**
+     * Returns the current default configuration data.
+     *
+     * If no default data has been set, it is initialized using a new builder.
+     *
+     * @return The current default configuration data.
+     * @since 1.0.0
+     */
+    protected fun getDefaultData(): D {
+        val current = defaultData.value
+        if (current != null) return current
+
+        val initial = createBuilder().produce()
+        defaultData.compareAndSet(null, initial)
+        return defaultData.value!!
+    }
+
+    /**
+     * Configures the default settings for the registry.
+     *
+     * This method creates a new builder, applies the provided [builder] block,
+     * and stores the resulting data as the new default configuration.
+     * Subsequent calls to [create] without a builder block will use these defaults.
+     *
+     * @param builder A lambda block to configure the default settings.
+     * @since 1.0.0
+     */
+    public fun default(builder: B.() -> Unit) {
+        val b = createBuilder()
+        b.apply(builder)
+        defaultData.value = b.produce()
+    }
+
+    /**
+     * Creates a new component instance using the provided builder block or defaults.
+     *
+     * @param builder An optional configuration builder block.
+     * @return A new component instance.
+     * @since 1.0.0
+     */
+    public fun create(builder: (B.() -> Unit)? = null): C {
+        return if (builder == null) {
+            createComponent(getDefaultData())
+        } else {
+            val b = createBuilder()
+            b.apply(builder)
+            createComponent(b.produce())
+        }
     }
 
     /**

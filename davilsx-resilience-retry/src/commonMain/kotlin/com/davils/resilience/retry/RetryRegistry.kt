@@ -17,6 +17,7 @@
 package com.davils.resilience.retry
 
 import com.davils.resilience.common.registry.ResilienceRegistry
+import com.davils.resilience.retry.event.RetryEvent
 
 /**
  * A specialized [ResilienceRegistry] for storing and managing [Retry] instances.
@@ -26,4 +27,8 @@ import com.davils.resilience.common.registry.ResilienceRegistry
  *
  * @since 1.0.0
  */
-public object RetryRegistry : ResilienceRegistry<Retry>()
+public object RetryRegistry : ResilienceRegistry<RetryEvent, RetryData, RetryBuilder, Retry>() {
+    override fun createBuilder(): RetryBuilder = RetryBuilder()
+
+    override fun createComponent(data: RetryData): Retry = Retry(data)
+}
