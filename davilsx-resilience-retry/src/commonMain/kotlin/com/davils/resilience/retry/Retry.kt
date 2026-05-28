@@ -19,9 +19,7 @@ package com.davils.resilience.retry
 import com.davils.resilience.common.ResilienceComponent
 import com.davils.resilience.retry.event.RetryEvent
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlin.reflect.KClass
 import kotlin.time.Duration
 
 /**
@@ -112,36 +110,6 @@ public class Retry internal constructor(
             attempt++
         }
     }
-
-    /**
-     * Subscribes to events of a specific type emitted by this retry instance.
-     *
-     * @param E The type of event to subscribe to.
-     * @param eventType The [KClass] of the event type.
-     * @param onError Optional error handler for the subscription.
-     * @param on The callback to invoke when an event is emitted.
-     * @return A [Job] representing the active subscription.
-     * @since 1.0.0
-     */
-    public fun <E : RetryEvent> subscribe(
-        eventType: KClass<E>,
-        onError: (suspend (Throwable) -> Unit)? = null,
-        on: suspend (E) -> Unit
-    ): Job = eventBus.subscribe(eventType, onError, on)
-
-    /**
-     * Subscribes to events of a specific type emitted by this retry instance (reified version).
-     *
-     * @param E The type of event to subscribe to.
-     * @param onError Optional error handler for the subscription.
-     * @param on The callback to invoke when an event is emitted.
-     * @return A [Job] representing the active subscription.
-     * @since 1.0.0
-     */
-    public inline fun <reified E : RetryEvent> subscribe(
-        noinline onError: (suspend (Throwable) -> Unit)? = null,
-        noinline on: suspend (E) -> Unit
-    ): Job = subscribe(E::class, onError, on)
 }
 
 /**

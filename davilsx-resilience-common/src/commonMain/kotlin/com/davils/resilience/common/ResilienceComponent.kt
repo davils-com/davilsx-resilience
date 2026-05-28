@@ -37,7 +37,9 @@ public abstract class ResilienceComponent<D : ResilienceComponentData, E : Event
         extraBufferCapacity = data.eventData.extraBufferCapacity
     }
 
-    public suspend fun isDisposed(): Boolean = mutex.withLock { isDisposed }
+    protected fun isDisposedUnsafe(): Boolean = isDisposed
+
+    public suspend fun isDisposed(): Boolean = mutex.withLock { isDisposedUnsafe() }
 
     override suspend fun dispose() {
         mutex.withLock {

@@ -73,17 +73,6 @@ public class TimeLimiter internal constructor(
             throw exception
         }
     }
-
-    public fun <E : TimeLimiterEvent> subscribe(
-        eventType: KClass<E>,
-        onError: (suspend (Throwable) -> Unit)? = null,
-        on: suspend (E) -> Unit
-    ): Job = eventBus.subscribe(eventType, onError, on)
-
-    public inline fun <reified E : TimeLimiterEvent> subscribe(
-        noinline onError: (suspend (Throwable) -> Unit)? = null,
-        noinline on: suspend (E) -> Unit
-    ): Job = subscribe(E::class, onError, on)
 }
 
 public fun timeLimiter(builder: TimeLimiterBuilder.() -> Unit): TimeLimiter =
