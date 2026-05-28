@@ -32,7 +32,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
 /**
- * An abstract base class for managing a registry of asynchronous disposable items.
+ * An abstract base class for managing a registry of asynchronous disposable resilience components.
  *
  * This registry provides thread-safe access to a collection of items identified by unique names.
  * All items stored in the registry must implement the [DisposableAsync] interface, allowing
