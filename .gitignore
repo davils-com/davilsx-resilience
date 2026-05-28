@@ -16,7 +16,10 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 local.properties
+
+### Junie ###
 .junie/memory
+.junie/plans
 
 ### Kotlin ###
 .kotlin
