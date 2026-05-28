@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.davils.resilience.common.registry
+package com.davils.resilience.common.registry.entity
 
 import com.davils.resilience.common.ResilienceComponent
 
 /**
- * Represents an item stored in a [ResilienceRegistry].
+ * Represents an item stored in a [com.davils.resilience.common.registry.ResilienceRegistry].
  *
  * This data class pairs a unique name with an asynchronous disposable item.
  * It is used for bulk operations and convenient item management within the registry.
@@ -44,5 +44,23 @@ public data class ResilienceRegistryItem<T : ResilienceComponent<*, *>>(
      *
      * @since 1.0.0
      */
-    public val item: T
-)
+    override val component: T,
+
+    /**
+     * A map of tags associated with the item.
+     *
+     * Tags are useful for grouping components and for integration with monitoring systems.
+     *
+     * @since 1.0.0
+     */
+    override val tags: Map<String, String> = emptyMap(),
+
+    /**
+     * A map of metadata associated with the item.
+     *
+     * Metadata can store additional context or configuration details.
+     *
+     * @since 1.0.0
+     */
+    override val metadata: Map<String, String> = emptyMap()
+) : ResilienceRegistryDtoBase<T>
