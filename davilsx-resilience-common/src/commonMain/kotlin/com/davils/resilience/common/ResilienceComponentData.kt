@@ -19,6 +19,20 @@ package com.davils.resilience.common
 import com.davils.kore.pattern.creational.dsl.verification.DslVerifiableData
 import com.davils.resilience.common.event.ResilienceEventData
 
+/**
+ * Interface representing the base data configuration for a resilience component.
+ *
+ * This interface extends [DslVerifiableData] to provide validation capabilities
+ * for component configurations. It ensures that every resilience component
+ * has associated event handling data.
+ *
+ * @since 1.0.0
+ */
 public interface ResilienceComponentData : DslVerifiableData {
+    /**
+     * The configuration data for event handling within the component.
+     *
+     * @since 1.0.0
+     */
     public val eventData: ResilienceEventData
 }

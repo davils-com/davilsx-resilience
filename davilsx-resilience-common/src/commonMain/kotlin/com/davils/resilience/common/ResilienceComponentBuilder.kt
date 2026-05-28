@@ -20,10 +20,30 @@ import com.davils.kore.annotation.KoreDsl
 import com.davils.kore.pattern.creational.dsl.validation.DslValidator
 import com.davils.resilience.common.event.ResilienceEventBuilder
 
+/**
+ * Base builder class for creating resilience components.
+ *
+ * This class provides a DSL for configuring resilience components, including
+ * event handling settings via [ResilienceEventBuilder].
+ *
+ * @param D The type of data class being built.
+ * @since 1.0.0
+ */
 @KoreDsl
 public abstract class ResilienceComponentBuilder<D : ResilienceComponentData> : DslValidator<D>() {
+    /**
+     * The builder used to configure event handling for the component.
+     *
+     * @since 1.0.0
+     */
     protected val eventBuilder: ResilienceEventBuilder = ResilienceEventBuilder()
 
+    /**
+     * Configures the event handling settings for the component.
+     *
+     * @param block A configuration block for [ResilienceEventBuilder].
+     * @since 1.0.0
+     */
     public fun event(block: ResilienceEventBuilder.() -> Unit) {
         eventBuilder.apply(block)
     }

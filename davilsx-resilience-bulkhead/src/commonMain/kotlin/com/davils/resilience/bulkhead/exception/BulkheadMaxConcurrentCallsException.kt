@@ -19,7 +19,7 @@ package com.davils.resilience.bulkhead.exception
 /**
  * Exception thrown by a [com.davils.resilience.bulkhead.Bulkhead] when the maximum number of concurrent calls is reached.
  *
- * @param msg The detail message.
+ * @param message The detail message.
  * @since 1.0.0
  */
-public class BulkheadMaxConcurrentCallsException(public val msg: String) : Exception(msg)
+public class BulkheadMaxConcurrentCallsException(message: String) : Exception(message)

@@ -27,11 +27,15 @@ import com.davils.resilience.common.event.ResilienceEventData
  * This class encapsulates settings such as event bus configuration
  * that govern the behavior of the registry.
  *
- * @param eventData Configuration for the registry's event bus.
  * @since 1.0.0
  */
 @ConsistentCopyVisibility
 public data class ResilienceRegistryData internal constructor(
+    /**
+     * Configuration for the registry's event bus.
+     *
+     * @since 1.0.0
+     */
     public val eventData: ResilienceEventData
 ) : DslVerifiableData {
 

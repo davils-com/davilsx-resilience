@@ -25,11 +25,45 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
+/**
+ * Base class for all resilience components.
+ *
+ * This class provides common functionality for resilience components, including
+ * event handling through an [EventBus] and lifecycle management via [DisposableAsync].
+ *
+ * @param D The type of configuration data for this component.
+ * @param E The type of event marker used by this component.
+ * @since 1.0.0
+ */
 public abstract class ResilienceComponent<D : ResilienceComponentData, E : EventMarker> : DisposableAsync {
     private var isDisposed: Boolean = false
+
+    /**
+     * The configuration data for this component.
+     *
+     * @since 1.0.0
+     */
     protected abstract val data: D
+
+    /**
+     * The event triggered when the component is disposed.
+     *
+     * @since 1.0.0
+     */
     protected abstract val disposeEvent: E
+
+    /**
+     * Mutex used to ensure thread-safe access to the component's state.
+     *
+     * @since 1.0.0
+     */
     protected val mutex: Mutex = Mutex()
+
+    /**
+     * The event bus used for publishing and subscribing to component events.
+     *
+     * @since 1.0.0
+     */
     protected val eventBus: EventBus<E> = eventBus(data.eventData.scope) {
         replay = data.eventData.replay
         onError = data.eventData.onError
@@ -37,10 +71,15 @@ public abstract class ResilienceComponent<D : ResilienceComponentData, E : Event
         extraBufferCapacity = data.eventData.extraBufferCapacity
     }
 
-    protected fun isDisposedUnsafe(): Boolean = isDisposed
+    private fun isDisposedUnsafe(): Boolean = isDisposed
 
-    public suspend fun isDisposed(): Boolean = mutex.withLock { isDisposedUnsafe() }
-
+    /**
+     * Disposes of the component and its resources.
+     *
+     * This method is thread-safe. It publishes the [disposeEvent] and closes the [eventBus].
+     *
+     * @since 1.0.0
+     */
     override suspend fun dispose() {
         mutex.withLock {
             if (isDisposed) return@withLock
@@ -51,12 +90,39 @@ public abstract class ResilienceComponent<D : ResilienceComponentData, E : Event
         eventBus.dispose()
     }
 
+    /**
+     * Checks whether the component has been disposed.
+     *
+     * @return `true` if the component is disposed, `false` otherwise.
+     * @since 1.0.0
+     */
+    public suspend fun isDisposed(): Boolean = mutex.withLock { isDisposedUnsafe() }
+
+    /**
+     * Subscribes to events of a specific type.
+     *
+     * @param R The type of event to subscribe to.
+     * @param eventType The class of the event type.
+     * @param onError An optional callback triggered when an error occurs during event processing.
+     * @param on The callback triggered when an event is received.
+     * @return A [Job] representing the subscription.
+     * @since 1.0.0
+     */
     public fun <R : EventMarker> subscribe(
         eventType: KClass<R>,
         onError: (suspend (Throwable) -> Unit)? = null,
         on: suspend (R) -> Unit
     ): Job = eventBus.subscribe(eventType, onError, on)
 
+    /**
+     * Subscribes to events of a specific type (reified).
+     *
+     * @param R The type of event to subscribe to.
+     * @param onError An optional callback triggered when an error occurs during event processing.
+     * @param on The callback triggered when an event is received.
+     * @return A [Job] representing the subscription.
+     * @since 1.0.0
+     */
     public inline fun <reified R : EventMarker> subscribe(
         noinline onError: (suspend (Throwable) -> Unit)? = null,
         noinline on: suspend (R) -> Unit

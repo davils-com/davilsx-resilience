@@ -40,6 +40,10 @@ import kotlin.reflect.KClass
  *
  * The registry enforces name constraints using a regular expression.
  *
+ * @param E The type of event marker used by the components.
+ * @param D The type of configuration data for the components.
+ * @param B The type of builder used to create components.
+ * @param C The type of resilience components managed by this registry.
  * @since 1.0.0
  */
 public abstract class ResilienceRegistry<
@@ -48,8 +52,28 @@ public abstract class ResilienceRegistry<
         B : ResilienceComponentBuilder<D>,
         C : ResilienceComponent<D, E>
 > : DisposableAsync {
+    /**
+     * The configuration data for the registry itself.
+     *
+     * @since 1.0.0
+     */
     protected abstract val registryData: ResilienceRegistryData
+
+    /**
+     * Creates a new builder instance for the components managed by this registry.
+     *
+     * @return A new builder instance of type [B].
+     * @since 1.0.0
+     */
     protected abstract fun createBuilder(): B
+
+    /**
+     * Creates a new component instance using the provided configuration data.
+     *
+     * @param data The configuration data for the new component.
+     * @return A new component instance of type [C].
+     * @since 1.0.0
+     */
     protected abstract fun createComponent(data: D): C
 
     private val defaultData = atomic<D?>(null)
@@ -129,6 +153,14 @@ public abstract class ResilienceRegistry<
         return added
     }
 
+    /**
+     * Disposes of the registry and all its registered components.
+     *
+     * This method clears the registry, disposes of all managed components,
+     * and closes the internal event bus.
+     *
+     * @since 1.0.0
+     */
     override suspend fun dispose() {
         eventBus.push(ResilienceRegistryEvent.RegistryDisposed)
         clear()
