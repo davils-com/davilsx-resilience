@@ -20,6 +20,8 @@ import com.davils.resilience.bulkhead.event.BulkheadEvent
 import com.davils.resilience.common.registry.ResilienceRegistry
 import com.davils.resilience.common.registry.ResilienceRegistryBuilder
 import com.davils.resilience.common.registry.ResilienceRegistryData
+import com.davils.resilience.common.registry.ResilienceRegistryEvent
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Registry for managing and retrieving [Bulkhead] instances.
@@ -44,4 +46,27 @@ public fun bulkheadRegistry(builder: ResilienceRegistryBuilder.() -> Unit): Bulk
     registryBuilder.builder()
     val data = registryBuilder.produce()
     return BulkheadRegistry(data)
+}
+
+public suspend fun main() {
+    val registry = bulkheadRegistry {
+        event {
+            replay = 0
+            extraBufferCapacity = 1000
+        }
+    }
+
+    registry.subscribe<ResilienceRegistryEvent.EntryRemoved<Bulkhead>> { event ->
+        println("Bulkhead removed: ${event.entry.metadata}")
+    }
+
+    registry.default {
+        maxConcurrentCalls = 10
+        maxWaitDuration = 1000.milliseconds
+    }
+
+    val bulkhead = registry["default"]
+    bulkhead.execute {
+        println("Executing...")
+    }
 }

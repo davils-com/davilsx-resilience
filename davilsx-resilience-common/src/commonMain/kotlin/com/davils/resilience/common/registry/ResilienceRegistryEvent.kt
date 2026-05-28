@@ -55,6 +55,20 @@ public sealed class ResilienceRegistryEvent : EventMarker() {
     ) : ResilienceRegistryEvent()
 
     /**
+     * Event emitted when an entry is replaced in the registry.
+     *
+     * @param name The name of the replaced entry.
+     * @param oldEntry The registry entry that was removed.
+     * @param newEntry The registry entry that was added.
+     * @since 1.0.0
+     */
+    public data class EntryReplaced<C : ResilienceComponent<*, *>>(
+        public val name: String,
+        public val oldEntry: ResilienceRegistryEntry<C>,
+        public val newEntry: ResilienceRegistryEntry<C>
+    ) : ResilienceRegistryEvent()
+
+    /**
      * Event emitted when the registry is cleared.
      *
      * @since 1.0.0

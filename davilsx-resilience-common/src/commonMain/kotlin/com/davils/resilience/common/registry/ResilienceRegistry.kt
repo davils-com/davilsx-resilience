@@ -106,6 +106,29 @@ public abstract class ResilienceRegistry<
         firstException?.let { throw it }
     }
 
+    private suspend fun tryPutAllEntries(
+        entries: Map<String, ResilienceRegistryEntry<C>>
+    ): Boolean {
+        if (entries.isEmpty()) return true
+
+        val added = withLock { map ->
+            for (key in entries.keys) {
+                if (map.containsKey(key)) return@withLock false
+            }
+
+            map.putAll(entries)
+            true
+        }
+
+        if (added) {
+            entries.forEach { (name, entry) ->
+                eventBus.push(ResilienceRegistryEvent.EntryAdded(name, entry))
+            }
+        }
+
+        return added
+    }
+
     override suspend fun dispose() {
         eventBus.push(ResilienceRegistryEvent.RegistryDisposed)
         clear()
@@ -285,14 +308,18 @@ public abstract class ResilienceRegistry<
      */
     public suspend fun putIf(name: String, item: C, condition: (name: String, item: C) -> Boolean): Boolean {
         validateName(name)
-        return withLock { map ->
+        val entry = ResilienceRegistryEntry(item)
+        val added = withLock { map ->
             if (existsUnsafe(map, name)) {
                 throw IllegalArgumentException("Item with name '$name' already exists in the registry")
             }
             if (!condition(name, item)) return@withLock false
-            val entry = ResilienceRegistryEntry(item)
             putUnsafe(map, name, entry)
         }
+        if (added) {
+            eventBus.push(ResilienceRegistryEvent.EntryAdded(name, entry))
+        }
+        return added
     }
 
     /**
@@ -309,11 +336,15 @@ public abstract class ResilienceRegistry<
      */
     public suspend fun tryPutIf(name: String, item: C, condition: (name: String, item: C) -> Boolean): Boolean {
         validateName(name)
-        return withLock { map ->
+        val entry = ResilienceRegistryEntry(item)
+        val added = withLock { map ->
             if (!condition(name, item)) return@withLock false
-            val entry = ResilienceRegistryEntry(item)
             putUnsafe(map, name, entry)
         }
+        if (added) {
+            eventBus.push(ResilienceRegistryEvent.EntryAdded(name, entry))
+        }
+        return added
     }
 
     /**
@@ -344,23 +375,15 @@ public abstract class ResilienceRegistry<
      * @since 1.0.0
      */
     public suspend fun tryPutAll(items: Map<String, C>): Boolean {
+        if (items.isEmpty()) return true
+
         items.keys.forEach { validateName(it) }
 
-        val entries = items.mapValues { ResilienceRegistryEntry(it.value) }
-        val added = withLock { map ->
-            if (items.keys.any { it in map }) {
-                return@withLock false
-            }
-            map.putAll(entries)
-            true
+        val entries = items.mapValues { (_, value) ->
+            ResilienceRegistryEntry(value)
         }
 
-        if (added) {
-            entries.forEach { (name, entry) ->
-                eventBus.push(ResilienceRegistryEvent.EntryAdded(name, entry))
-            }
-        }
-        return added
+        return tryPutAllEntries(entries)
     }
 
     /**
@@ -371,7 +394,9 @@ public abstract class ResilienceRegistry<
      * @since 1.0.0
      */
     public suspend fun putAll(items: Iterable<ResilienceRegistryItem<C>>) {
-        items.forEach { put(it) }
+        if (!tryPutAll(items)) {
+            throw IllegalArgumentException("Some items already exist in the registry")
+        }
     }
 
     /**
@@ -383,9 +408,27 @@ public abstract class ResilienceRegistry<
      * @since 1.0.0
      */
     public suspend fun tryPutAll(items: Iterable<ResilienceRegistryItem<C>>): Boolean {
-        var allAdded = true
-        items.forEach { if (!tryPut(it)) allAdded = false }
-        return allAdded
+        val itemList = items.toList()
+        if (itemList.isEmpty()) return true
+
+        itemList.forEach { validateName(it.name) }
+
+        val entries = buildMap {
+            for (item in itemList) {
+                if (containsKey(item.name)) return false
+
+                put(
+                    item.name,
+                    ResilienceRegistryEntry(
+                        item.component,
+                        item.tags,
+                        item.metadata
+                    )
+                )
+            }
+        }
+
+        return tryPutAllEntries(entries)
     }
 
     /**
@@ -755,11 +798,12 @@ public abstract class ResilienceRegistry<
             map[name] = newEntry
             existing
         }
-        oldEntry?.let {
-            eventBus.push(ResilienceRegistryEvent.EntryRemoved(name, it))
-            it.component.dispose()
+        if (oldEntry != null) {
+            eventBus.push(ResilienceRegistryEvent.EntryReplaced(name, oldEntry, newEntry))
+            oldEntry.component.dispose()
+        } else {
+            eventBus.push(ResilienceRegistryEvent.EntryAdded(name, newEntry))
         }
-        eventBus.push(ResilienceRegistryEvent.EntryAdded(name, newEntry))
     }
 
 
@@ -773,6 +817,18 @@ public abstract class ResilienceRegistry<
      */
     public suspend operator fun get(name: String): C {
         return lookupOrNull(name) ?: throw IllegalArgumentException("No item with name $name found in the registry")
+    }
+
+    /**
+     * Operator for adding or replacing an item in the registry using the indexing operator.
+     *
+     * @param name The name of the item to add or replace.
+     * @param item The item to add or replace.
+     * @throws IllegalArgumentException If the name is invalid.
+     * @since 1.0.0
+     */
+    public suspend operator fun set(name: String, item: C) {
+        replace(name, item)
     }
 
     /**
