@@ -18,17 +18,30 @@ package com.davils.resilience.bulkhead
 
 import com.davils.resilience.bulkhead.event.BulkheadEvent
 import com.davils.resilience.common.registry.ResilienceRegistry
+import com.davils.resilience.common.registry.ResilienceRegistryBuilder
+import com.davils.resilience.common.registry.ResilienceRegistryData
 
 /**
  * Registry for managing and retrieving [Bulkhead] instances.
  *
  * Ensures that bulkheads are reused and provides a central point for bulkhead management.
+ * By default, it provides a global instance through the companion object, but multiple instances
+ * can be created for use in different contexts, such as Dependency Injection.
  *
+ * @param registryData Configuration data for the registry.
  * @since 1.0.0
  */
-public object BulkheadRegistry : ResilienceRegistry<BulkheadEvent, BulkheadData, BulkheadBuilder, Bulkhead>() {
+public class BulkheadRegistry(
+    override val registryData: ResilienceRegistryData
+) : ResilienceRegistry<BulkheadEvent, BulkheadData, BulkheadBuilder, Bulkhead>() {
     override fun createBuilder(): BulkheadBuilder = BulkheadBuilder()
 
     override fun createComponent(data: BulkheadData): Bulkhead = Bulkhead(data)
 }
 
+public fun bulkheadRegistry(builder: ResilienceRegistryBuilder.() -> Unit): BulkheadRegistry {
+    val registryBuilder = ResilienceRegistryBuilder()
+    registryBuilder.builder()
+    val data = registryBuilder.produce()
+    return BulkheadRegistry(data)
+}
