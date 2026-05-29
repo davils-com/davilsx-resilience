@@ -17,8 +17,6 @@
 package com.davils.resilience.metrics.bulkhead
 
 import com.davils.resilience.bulkhead.Bulkhead
-import com.davils.resilience.metrics.retry.RetryMetricsCollector
-import com.davils.resilience.retry.Retry
 
 public val Bulkhead.metrics: BulkheadMetricsCollector
     get() = BulkheadMetricsCollector(this)

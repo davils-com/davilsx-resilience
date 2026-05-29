@@ -20,8 +20,9 @@ import com.davils.resilience.bulkhead.Bulkhead
 import com.davils.resilience.metrics.MetricsCollector
 
 public class BulkheadMetricsCollector(override val component: Bulkhead) : MetricsCollector<Bulkhead>() {
-    override fun collect() {
+    override fun scrape() {
         TODO("Not yet implemented")
     }
+
 }
 
