@@ -21,7 +21,6 @@ import com.davils.kore.pattern.creational.dsl.verification.verifyDsl
 import com.davils.resilience.common.ResilienceComponentData
 import com.davils.resilience.common.event.ResilienceEventData
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Configuration data for a [Bulkhead].
@@ -38,26 +37,26 @@ public data class BulkheadData internal constructor(
      *
      * @since 1.0.0
      */
-    override val eventData: ResilienceEventData
-): ResilienceComponentData {
+    override val eventData: ResilienceEventData,
+
     /**
      * The maximum number of concurrent calls allowed by the bulkhead.
      *
-     * Must be at least 1. Defaults to 25.
+     * Must be at least 1.
      *
      * @since 1.0.0
      */
-    public var maxConcurrentCalls: Int = 25
+    public val maxConcurrentCalls: Int,
 
     /**
      * The maximum duration to wait for a permit before failing.
      *
-     * Must be non-negative. Defaults to 500 milliseconds.
+     * Must be non-negative.
      *
      * @since 1.0.0
      */
-    public var maxWaitDuration: Duration = 500.milliseconds
-
+    public val maxWaitDuration: Duration
+): ResilienceComponentData {
     /**
      * Validates the bulkhead configuration.
      *

@@ -82,9 +82,10 @@ public class BulkheadBuilder internal constructor() : ResilienceComponentBuilder
      */
     override fun data(): BulkheadData {
         val eventData = eventBuilder.produce()
-        return BulkheadData(eventData).apply {
-            maxConcurrentCalls = this@BulkheadBuilder.maxConcurrentCalls
-            maxWaitDuration = this@BulkheadBuilder.maxWaitDuration
-        }
+        return BulkheadData(
+            eventData = eventData,
+            maxConcurrentCalls = maxConcurrentCalls,
+            maxWaitDuration = maxWaitDuration
+        )
     }
 }

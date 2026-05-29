@@ -29,7 +29,7 @@ import kotlin.time.TimeSource
 /**
  * A bulkhead resilience component that limits the number of concurrent calls.
  *
- * The [Bulkhead] uses a semaphore to ensure that no more than [BulkheadData.maxConcurrentCalls]
+ * The [Bulkhead] uses semaphore to ensure that no more than [BulkheadData.maxConcurrentCalls]
  * are executed at the same time. If the limit is reached, callers will wait up to
  * [BulkheadData.maxWaitDuration] before a [BulkheadMaxConcurrentCallsException] is thrown.
  *
