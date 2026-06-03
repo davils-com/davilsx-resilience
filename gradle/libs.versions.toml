@@ -1,6 +1,6 @@
 [versions]
 # plugins
-kotlin = "2.3.21"
+kotlin = "2.4.0"
 kreate = "1.2.4"
 kotest = "6.1.11"
 ksp = "2.3.9"
