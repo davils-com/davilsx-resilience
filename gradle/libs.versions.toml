@@ -17,7 +17,7 @@ ktor = "3.5.0"
 kore = "1.1.0"
 
 # micrometer
-micrometer = "1.17.0-M3"
+micrometer = "1.17.0"
 
 [libraries]
 # davils
