@@ -2,10 +2,10 @@
 # plugins
 kotlin = "2.4.0"
 kreate = "1.2.4"
-kotest = "6.1.11"
+kotest = "6.2.1"
 ksp = "2.3.9"
 publish = "0.36.0"
-detekt = "2.0.0-alpha.3"
+detekt = "2.0.0-alpha.5"
 android = "9.1.1"
 
 # kotlin
