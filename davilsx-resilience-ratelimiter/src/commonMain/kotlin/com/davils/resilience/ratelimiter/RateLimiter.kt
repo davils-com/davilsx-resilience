@@ -17,6 +17,10 @@
 package com.davils.resilience.ratelimiter
 
 import com.davils.resilience.common.ResilienceComponent
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.withLock
+import kotlin.time.Duration
+import kotlin.time.TimeSource
 
 
 public class RateLimiter internal constructor(
@@ -25,6 +29,39 @@ public class RateLimiter internal constructor(
 
     override val disposeEvent: RateLimiterEvent
         get() = RateLimiterEvent.RateLimiterDisposed
+
+    private val startTime = TimeSource.Monotonic.markNow()
+
+    public suspend fun acquireSlot(permits: Int = 1): Boolean {
+        checkDisposal()
+    }
+
+    public suspend fun reserveSlot(permits: Int = 1): Duration {
+        checkDisposal()
+        return reserveSlotsInternal(permits)
+    }
+
+    private suspend fun reserveSlotsInternal(permits: Int): Duration {
+        val now = TimeSource.Monotonic.markNow()
+        val currentTime = now - startTime
+
+        return mutex.withLock {}
+    }
+
+    public suspend fun getAvailableSlots(): Int {
+        val now = TimeSource.Monotonic.markNow()
+        val currentTime = now - startTime
+
+        return mutex.withLock {}
+    }
+
+    private suspend fun checkDisposal()  {
+        if (isDisposed()) {
+            throw CancellationException("RateLimiter instance is disposed")
+        }
+    }
+
+
 }
 
 public fun rateLimiter(builder: RateLimiterBuilder.() -> Unit): RateLimiter {
