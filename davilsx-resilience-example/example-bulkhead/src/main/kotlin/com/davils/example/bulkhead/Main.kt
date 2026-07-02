@@ -17,7 +17,6 @@
 package com.davils.example.bulkhead
 
 import com.davils.resilience.bulkhead.bulkhead
-import com.davils.resilience.bulkhead.event.BulkheadEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -40,10 +39,6 @@ suspend fun main() {
             extraBufferCapacity = 128
             onError = { throwable -> println("Error: $throwable") }
         }
-    }
-
-    bulkhead.subscribe<BulkheadEvent.BulkheadDispose> {
-        // do something when bulkhead is disposed
     }
 
 
