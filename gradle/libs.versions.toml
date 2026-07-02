@@ -14,7 +14,7 @@ atomicfu = "0.33.0"
 ktor = "3.5.1"
 
 # davils
-kore = "1.1.0"
+kore = "1.1.1"
 
 # micrometer
 micrometer = "1.17.0"
