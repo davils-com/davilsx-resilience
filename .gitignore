@@ -16,6 +16,7 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 local.properties
+kotlin-js-store/
 
 ### Junie ###
 .junie/memory
