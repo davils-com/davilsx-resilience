@@ -29,12 +29,6 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 # atomicfu
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 
-# ktor client
-ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-
-# ktor server
-ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
-
 # micrometer
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 
@@ -68,11 +62,6 @@ resilience-common-common-api = [
     "davilsx-kore",
     "kotlinx-coroutines-core",
     "kotlinx-atomicfu"
-]
-
-resilience-ktor-common-impl = [
-    "ktor-client-core",
-    "ktor-server-core"
 ]
 
 resilience-micrometer-jvm-impl = [

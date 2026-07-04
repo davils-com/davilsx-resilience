@@ -40,6 +40,4 @@ suspend fun main() {
             onError = { throwable -> println("Error: $throwable") }
         }
     }
-
-
 }
