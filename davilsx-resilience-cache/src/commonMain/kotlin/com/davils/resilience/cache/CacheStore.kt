@@ -23,7 +23,7 @@ package com.davils.resilience.cache
  *
  * @param K The type of cache keys.
  * @param V The type of cache values.
- * @since 1.0.0
+ * @since 1.2.0
  */
 public interface CacheStore<K, V> {
     /**
@@ -31,7 +31,7 @@ public interface CacheStore<K, V> {
      *
      * @param key The key to load.
      * @return The loaded value, or `null` if no value exists for the key.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun load(key: K): V?
 
@@ -40,7 +40,7 @@ public interface CacheStore<K, V> {
      *
      * @param key The key to store.
      * @param value The value to store.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun store(key: K, value: V)
 
@@ -48,7 +48,7 @@ public interface CacheStore<K, V> {
      * Removes the value for the given key from the backing store.
      *
      * @param key The key to remove.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun remove(key: K)
 }

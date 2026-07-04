@@ -28,14 +28,14 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * @param K The type of cache keys.
  * @param V The type of cache values.
- * @since 1.0.0
+ * @since 1.2.0
  */
 @KoreDsl
 public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuilder<CacheData<K, V>>() {
     /**
      * The maximum number of entries the cache may hold.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public var maxSize: Int = 1000
 
@@ -44,7 +44,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      *
      * Defaults to [EvictionStrategy.Lru].
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public var evictionStrategy: EvictionStrategy = EvictionStrategy.Lru
 
@@ -53,7 +53,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      *
      * Defaults to [Duration.ZERO], which disables write-based expiration.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public var expireAfterWrite: Duration = Duration.ZERO
 
@@ -62,7 +62,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      *
      * Defaults to [Duration.ZERO], which disables access-based expiration.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public var expireAfterAccess: Duration = Duration.ZERO
 
@@ -71,14 +71,14 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      *
      * Defaults to [Duration.ZERO], which disables active cleanup.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public var cleanupInterval: Duration = Duration.ZERO
 
     /**
      * The optional backing store for read-through and write operations.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public var store: CacheStore<K, V>? = null
 
@@ -87,7 +87,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      *
      * Defaults to [WriteStrategy.WRITE_THROUGH].
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public var writeStrategy: WriteStrategy = WriteStrategy.WRITE_THROUGH
 
@@ -97,7 +97,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the maximum number of entries the cache may hold.
      *
      * @param maxSize The maximum cache size.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun maxSize(maxSize: Int) {
         this.maxSize = maxSize
@@ -107,7 +107,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the eviction strategy using a built-in strategy type.
      *
      * @param evictionStrategyType The eviction strategy type.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun evictionStrategy(evictionStrategyType: EvictionStrategyType) {
         this.evictionStrategy = evictionStrategyType.toStrategy()
@@ -117,7 +117,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the eviction strategy.
      *
      * @param evictionStrategy The eviction strategy.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun evictionStrategy(evictionStrategy: EvictionStrategy) {
         this.evictionStrategy = evictionStrategy
@@ -127,7 +127,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the maximum age of an entry since creation.
      *
      * @param expireAfterWrite The write expiration duration.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun expireAfterWrite(expireAfterWrite: Duration) {
         this.expireAfterWrite = expireAfterWrite
@@ -137,7 +137,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the maximum age of an entry since creation in milliseconds.
      *
      * @param expireAfterWriteMillis The write expiration duration in milliseconds.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun expireAfterWrite(expireAfterWriteMillis: Long) {
         this.expireAfterWrite = expireAfterWriteMillis.milliseconds
@@ -147,7 +147,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the maximum idle time of an entry since last access.
      *
      * @param expireAfterAccess The access expiration duration.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun expireAfterAccess(expireAfterAccess: Duration) {
         this.expireAfterAccess = expireAfterAccess
@@ -157,7 +157,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the maximum idle time of an entry since last access in milliseconds.
      *
      * @param expireAfterAccessMillis The access expiration duration in milliseconds.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun expireAfterAccess(expireAfterAccessMillis: Long) {
         this.expireAfterAccess = expireAfterAccessMillis.milliseconds
@@ -167,7 +167,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the interval at which expired entries are actively removed.
      *
      * @param cleanupInterval The cleanup interval.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun cleanupInterval(cleanupInterval: Duration) {
         this.cleanupInterval = cleanupInterval
@@ -177,7 +177,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the interval at which expired entries are actively removed in milliseconds.
      *
      * @param cleanupIntervalMillis The cleanup interval in milliseconds.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun cleanupInterval(cleanupIntervalMillis: Long) {
         this.cleanupInterval = cleanupIntervalMillis.milliseconds
@@ -187,7 +187,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the backing store for read-through and write operations.
      *
      * @param store The backing store.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun store(store: CacheStore<K, V>) {
         this.store = store
@@ -197,7 +197,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Sets the write strategy used when persisting values.
      *
      * @param writeStrategy The write strategy.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun writeStrategy(writeStrategy: WriteStrategy) {
         this.writeStrategy = writeStrategy
@@ -207,7 +207,7 @@ public class CacheBuilder<K, V> internal constructor() : ResilienceComponentBuil
      * Configures write-back behavior.
      *
      * @param block A configuration block for [WriteBackConfigBuilder].
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun writeBack(block: WriteBackConfigBuilder.() -> Unit) {
         writeBackConfigBuilder.apply(block)

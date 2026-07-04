@@ -24,42 +24,42 @@ import kotlin.time.TimeSource
  * A cache entry containing a value and metadata used for TTL and eviction.
  *
  * @param V The type of the cached value.
- * @since 1.0.0
+ * @since 1.2.0
  */
 @ConsistentCopyVisibility
 public data class CacheEntry<V> internal constructor(
     /**
      * The cached value.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val value: V,
 
     /**
      * The time when this entry was created.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val createdAt: TimeMark,
 
     /**
      * The time when this entry was last accessed.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val lastAccessedAt: TimeMark,
 
     /**
      * The number of times this entry has been accessed.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val accessCount: Long,
 
     /**
      * The insertion sequence number used for FIFO eviction.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val insertionSeq: Long,
 ) {
@@ -67,7 +67,7 @@ public data class CacheEntry<V> internal constructor(
      * Returns a copy of this entry with updated access metadata.
      *
      * @return A new [CacheEntry] with an incremented access count and refreshed last access time.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun accessed(): CacheEntry<V> {
         val now = TimeSource.Monotonic.markNow()
@@ -83,7 +83,7 @@ public data class CacheEntry<V> internal constructor(
      * @param expireAfterWrite The maximum age of the entry since creation. [Duration.ZERO] disables write expiry.
      * @param expireAfterAccess The maximum idle time since last access. [Duration.ZERO] disables access expiry.
      * @return `true` if the entry is expired, `false` otherwise.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public fun isExpired(
         expireAfterWrite: Duration,

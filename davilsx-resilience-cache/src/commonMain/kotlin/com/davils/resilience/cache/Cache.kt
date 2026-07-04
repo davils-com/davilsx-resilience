@@ -38,7 +38,7 @@ import kotlin.time.Duration
  *
  * @param K The type of cache keys.
  * @param V The type of cache values.
- * @since 1.0.0
+ * @since 1.2.0
  */
 public class Cache<K, V> internal constructor(
     override val data: CacheData<K, V>,
@@ -82,7 +82,7 @@ public class Cache<K, V> internal constructor(
      *
      * @param key The key to look up.
      * @return The cached value, or `null` if no valid entry exists.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun get(key: K): V? {
         checkDisposal()
@@ -103,7 +103,7 @@ public class Cache<K, V> internal constructor(
      *
      * @param key The key to look up.
      * @return The cached value, or `null` if no valid entry exists.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun getOrNull(key: K): V? {
         checkDisposal()
@@ -120,7 +120,7 @@ public class Cache<K, V> internal constructor(
      * @param key The key to look up.
      * @param loader The suspendable loader invoked when the key is not present.
      * @return The cached or loaded value.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun get(key: K, loader: suspend (K) -> V): V {
         checkDisposal()
@@ -145,7 +145,7 @@ public class Cache<K, V> internal constructor(
      *
      * @param key The key to store.
      * @param value The value to store.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun put(key: K, value: V) {
         checkDisposal()
@@ -157,7 +157,7 @@ public class Cache<K, V> internal constructor(
      * Removes the entry associated with the given [key].
      *
      * @param key The key to remove.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun remove(key: K) {
         checkDisposal()
@@ -176,7 +176,7 @@ public class Cache<K, V> internal constructor(
      *
      * @param key The key to check.
      * @return `true` if a valid entry exists, `false` otherwise.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun contains(key: K): Boolean {
         checkDisposal()
@@ -189,7 +189,7 @@ public class Cache<K, V> internal constructor(
      * Expired entries are included until they are lazily removed or cleaned up actively.
      *
      * @return The current number of entries.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun size(): Long = entries.size()
 
@@ -197,14 +197,14 @@ public class Cache<K, V> internal constructor(
      * Returns a snapshot of all keys currently held by the cache.
      *
      * @return A set of cache keys.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun keys(): Set<K> = entries.keys()
 
     /**
      * Removes all entries from the cache.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun clear() {
         checkDisposal()
@@ -227,7 +227,7 @@ public class Cache<K, V> internal constructor(
      *
      * Has no effect when [WriteStrategy.WRITE_THROUGH] is configured.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun flush() {
         checkDisposal()
@@ -259,7 +259,7 @@ public class Cache<K, V> internal constructor(
      *
      * Cancels maintenance coroutines, optionally flushes write-back entries, and closes the event bus.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     override suspend fun dispose() {
         maintenanceJobs.forEach { it.cancel() }
@@ -388,7 +388,7 @@ public class Cache<K, V> internal constructor(
  * @param V The type of cache values.
  * @param builder The configuration builder block.
  * @return A new [Cache] instance.
- * @since 1.0.0
+ * @since 1.2.0
  */
 public fun <K, V> cache(builder: CacheBuilder<K, V>.() -> Unit): Cache<K, V> {
     val cacheBuilder = CacheBuilder<K, V>()

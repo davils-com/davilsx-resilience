@@ -27,14 +27,14 @@ import kotlin.time.Duration
  *
  * @param K The type of cache keys.
  * @param V The type of cache values.
- * @since 1.0.0
+ * @since 1.2.0
  */
 @ConsistentCopyVisibility
 public data class CacheData<K, V> internal constructor(
     /**
      * The event configuration for the cache.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     override val eventData: ResilienceEventData,
 
@@ -43,14 +43,14 @@ public data class CacheData<K, V> internal constructor(
      *
      * Must be at least 1.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val maxSize: Int,
 
     /**
      * The strategy used to select entries for eviction.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val evictionStrategy: EvictionStrategy,
 
@@ -59,7 +59,7 @@ public data class CacheData<K, V> internal constructor(
      *
      * [Duration.ZERO] disables write-based expiration.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val expireAfterWrite: Duration,
 
@@ -68,28 +68,28 @@ public data class CacheData<K, V> internal constructor(
      *
      * [Duration.ZERO] disables access-based expiration.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val expireAfterAccess: Duration,
 
     /**
      * The optional backing store for read-through and write operations.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val store: CacheStore<K, V>?,
 
     /**
      * The write strategy used when persisting values.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val writeStrategy: WriteStrategy,
 
     /**
      * The configuration for write-back behavior.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val writeBackConfig: WriteBackConfig,
 
@@ -98,7 +98,7 @@ public data class CacheData<K, V> internal constructor(
      *
      * [Duration.ZERO] disables active cleanup.
      *
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public val cleanupInterval: Duration,
 ) : ResilienceComponentData {
@@ -106,7 +106,7 @@ public data class CacheData<K, V> internal constructor(
      * Validates the cache configuration.
      *
      * @return A [DslVerification] object containing any validation errors.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     override fun validate(): DslVerification = verifyDsl {
         if (maxSize < 1) {

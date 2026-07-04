@@ -28,7 +28,7 @@ import kotlinx.atomicfu.atomic
  *
  * @param K The type of cache keys.
  * @param V The type of cache values.
- * @since 1.0.0
+ * @since 1.2.0
  */
 public class InMemoryCacheStore<K, V> internal constructor(
     initial: Map<K, V> = emptyMap(),
@@ -56,7 +56,7 @@ public class InMemoryCacheStore<K, V> internal constructor(
      * Returns a snapshot of all entries currently held by this store.
      *
      * @return A map containing all key-value pairs.
-     * @since 1.0.0
+     * @since 1.2.0
      */
     public suspend fun snapshot(): Map<K, V> {
         ensureSeeded()
@@ -78,7 +78,7 @@ public class InMemoryCacheStore<K, V> internal constructor(
  * @param V The type of cache values.
  * @param initial Optional initial entries copied into the store on first access.
  * @return A new [InMemoryCacheStore] instance.
- * @since 1.0.0
+ * @since 1.2.0
  */
 public fun <K, V> inMemoryCacheStore(initial: Map<K, V> = emptyMap()): InMemoryCacheStore<K, V> =
     InMemoryCacheStore(initial)
