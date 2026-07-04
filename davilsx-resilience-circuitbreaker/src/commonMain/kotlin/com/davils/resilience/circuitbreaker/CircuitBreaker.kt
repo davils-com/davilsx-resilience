@@ -331,10 +331,6 @@ public class CircuitBreaker internal constructor(
 
     private suspend fun releasePermissionIfHalfOpen(): Unit = mutex.withLock { releasePermissionUnsafe() }
 
-    private suspend fun handleThresholdResult(result: ThresholdResult) {
-        mutex.withLock { handleThresholdResultUnsafe(result) }
-    }
-
     /** Must be called under the mutex. */
     private fun handleThresholdResultUnsafe(result: ThresholdResult) {
         if (!result.anyExceeded) {
@@ -369,7 +365,12 @@ public class CircuitBreaker internal constructor(
         if (handler.allProbeCallsSucceeded()) {
             cancelAutoTransitionJob()
             stateHandler = ClosedStateHandler(data)
-            eventBus.push(CircuitBreakerEvent.StateTransition(CircuitBreakerState.HALF_OPEN, CircuitBreakerState.CLOSED))
+            eventBus.push(
+                CircuitBreakerEvent.StateTransition(
+                    CircuitBreakerState.HALF_OPEN,
+                    CircuitBreakerState.CLOSED
+                )
+            )
         }
     }
 
