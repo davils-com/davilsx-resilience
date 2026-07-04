@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Configuration for write-back cache behavior.
  *
- * @since 1.2.0
+ * @since 1.0.0
  */
 @ConsistentCopyVisibility
 public data class WriteBackConfig internal constructor(

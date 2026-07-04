@@ -26,7 +26,7 @@ import com.davils.resilience.cache.CacheStore
  *
  * @param K The type of cache keys.
  * @param V The type of cache values.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public class DelegatingCacheStore<K, V> internal constructor(
     private val loadDelegate: suspend (K) -> V?,
@@ -53,7 +53,7 @@ public class DelegatingCacheStore<K, V> internal constructor(
  * @param store Persists a value for the given key.
  * @param remove Removes the value for the given key.
  * @return A new [DelegatingCacheStore] instance.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun <K, V> delegatingCacheStore(
     load: suspend (K) -> V?,

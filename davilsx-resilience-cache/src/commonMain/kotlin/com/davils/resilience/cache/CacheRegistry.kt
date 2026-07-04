@@ -30,7 +30,7 @@ import com.davils.resilience.common.registry.ResilienceRegistryData
  * @param K The type of cache keys.
  * @param V The type of cache values.
  * @param registryData Configuration data for the registry.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public class CacheRegistry<K, V>(
     override val registryData: ResilienceRegistryData,
@@ -47,7 +47,7 @@ public class CacheRegistry<K, V>(
  * @param V The type of cache values.
  * @param builder The configuration builder block.
  * @return A new [CacheRegistry] instance.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun <K, V> cacheRegistry(builder: ResilienceRegistryBuilder.() -> Unit): CacheRegistry<K, V> {
     val registryBuilder = ResilienceRegistryBuilder()

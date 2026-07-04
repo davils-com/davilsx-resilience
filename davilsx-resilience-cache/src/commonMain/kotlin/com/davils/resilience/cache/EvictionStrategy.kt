@@ -19,27 +19,27 @@ package com.davils.resilience.cache
 /**
  * Built-in eviction strategy types.
  *
- * @since 1.2.0
+ * @since 1.0.0
  */
 public enum class EvictionStrategyType {
     /**
      * Evicts the least recently accessed entry.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     LRU,
 
     /**
      * Evicts the least frequently accessed entry.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     LFU,
 
     /**
      * Evicts the oldest inserted entry.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     FIFO,
 }
@@ -49,7 +49,7 @@ public enum class EvictionStrategyType {
  *
  * Implementations must be stateless; all eviction metadata lives in [CacheEntry].
  *
- * @since 1.2.0
+ * @since 1.0.0
  */
 public interface EvictionStrategy {
     /**
@@ -58,14 +58,14 @@ public interface EvictionStrategy {
      * @param K The type of cache keys.
      * @param entries A snapshot of the current cache entries.
      * @return The key to evict, or `null` if no entry can be selected.
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public fun <K> selectVictim(entries: Map<K, CacheEntry<*>>): K?
 
     /**
      * Least Recently Used eviction strategy.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public data object Lru : EvictionStrategy {
         override fun <K> selectVictim(entries: Map<K, CacheEntry<*>>): K? {
@@ -78,7 +78,7 @@ public interface EvictionStrategy {
     /**
      * Least Frequently Used eviction strategy.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public data object Lfu : EvictionStrategy {
         override fun <K> selectVictim(entries: Map<K, CacheEntry<*>>): K? {
@@ -94,7 +94,7 @@ public interface EvictionStrategy {
     /**
      * First In First Out eviction strategy.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     public data object Fifo : EvictionStrategy {
         override fun <K> selectVictim(entries: Map<K, CacheEntry<*>>): K? {
@@ -109,7 +109,7 @@ public interface EvictionStrategy {
  * Resolves an [EvictionStrategyType] to its corresponding [EvictionStrategy] implementation.
  *
  * @return The eviction strategy for the given type.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun EvictionStrategyType.toStrategy(): EvictionStrategy = when (this) {
     EvictionStrategyType.LRU -> EvictionStrategy.Lru

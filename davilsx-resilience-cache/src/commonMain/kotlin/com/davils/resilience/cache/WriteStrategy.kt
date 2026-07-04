@@ -19,20 +19,20 @@ package com.davils.resilience.cache
 /**
  * Defines how cache writes are propagated to the backing [CacheStore].
  *
- * @since 1.2.0
+ * @since 1.0.0
  */
 public enum class WriteStrategy {
     /**
      * Writes are synchronously propagated to the backing store on every [Cache.put].
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     WRITE_THROUGH,
 
     /**
      * Writes are buffered in memory and flushed to the backing store asynchronously.
      *
-     * @since 1.2.0
+     * @since 1.0.0
      */
     WRITE_BACK,
 }

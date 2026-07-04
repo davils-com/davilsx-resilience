@@ -26,7 +26,7 @@ import kotlin.time.Duration
  * @param maxSize The maximum number of entries before eviction runs.
  * @param builder An optional configuration block applied after the preset.
  * @return A new [Cache] instance with LRU eviction.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun <K, V> lruCache(
     maxSize: Int = 1000,
@@ -45,7 +45,7 @@ public fun <K, V> lruCache(
  * @param maxSize The maximum number of entries before eviction runs.
  * @param builder An optional configuration block applied after the preset.
  * @return A new [Cache] instance with LFU eviction.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun <K, V> lfuCache(
     maxSize: Int = 1000,
@@ -64,7 +64,7 @@ public fun <K, V> lfuCache(
  * @param maxSize The maximum number of entries before eviction runs.
  * @param builder An optional configuration block applied after the preset.
  * @return A new [Cache] instance with FIFO eviction.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun <K, V> fifoCache(
     maxSize: Int = 1000,
@@ -82,7 +82,7 @@ public fun <K, V> fifoCache(
  * @param V The type of cache values.
  * @param builder An optional configuration block.
  * @return A new in-memory [Cache] instance.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun <K, V> inMemoryCache(
     builder: CacheBuilder<K, V>.() -> Unit = {},
@@ -98,7 +98,7 @@ public fun <K, V> inMemoryCache(
  * @param cleanupInterval The interval for active expiry cleanup; [Duration.ZERO] disables.
  * @param builder An optional configuration block applied after the preset.
  * @return A new [Cache] instance with expiration enabled.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun <K, V> expiringCache(
     expireAfterWrite: Duration,
@@ -120,7 +120,7 @@ public fun <K, V> expiringCache(
  * @param store The backing store for read-through and write-through operations.
  * @param builder An optional configuration block applied after the preset.
  * @return A new write-through [Cache] instance.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun <K, V> writeThroughCache(
     store: CacheStore<K, V>,
@@ -140,7 +140,7 @@ public fun <K, V> writeThroughCache(
  * @param builder An optional configuration block applied after the preset; use [CacheBuilder.writeBack]
  *   to configure flush behavior.
  * @return A new write-back [Cache] instance.
- * @since 1.2.0
+ * @since 1.0.0
  */
 public fun <K, V> writeBackCache(
     store: CacheStore<K, V>,
