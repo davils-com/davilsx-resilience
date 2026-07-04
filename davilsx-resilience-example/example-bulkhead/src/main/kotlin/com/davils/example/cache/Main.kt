@@ -18,40 +18,17 @@ package com.davils.example.cache
 
 import com.davils.resilience.cache.Cache
 import com.davils.resilience.cache.CacheEvent
-import com.davils.resilience.cache.CacheStore
 import com.davils.resilience.cache.EvictionStrategyType
 import com.davils.resilience.cache.WriteStrategy
 import com.davils.resilience.cache.cache
 import com.davils.resilience.cache.cacheRegistry
+import com.davils.resilience.cache.store.inMemoryCacheStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-
-/**
- * A trivial in-memory [CacheStore] that simulates a slow backing database.
- */
-private class InMemoryUserStore : CacheStore<String, String> {
-    private val database = mutableMapOf("u1" to "Ada Lovelace")
-
-    override suspend fun load(key: String): String? {
-        delay(50)
-        return database[key]
-    }
-
-    override suspend fun store(key: String, value: String) {
-        delay(50)
-        database[key] = value
-    }
-
-    override suspend fun remove(key: String) {
-        database.remove(key)
-    }
-
-    fun snapshot(): Map<String, String> = database.toMap()
-}
 
 suspend fun main() {
     basicUsageExample()
@@ -155,7 +132,7 @@ private suspend fun expirationExample() {
 private suspend fun readThroughWriteThroughExample() {
     println("\n--- read-through / write-through ---")
 
-    val store = InMemoryUserStore()
+    val store = inMemoryCacheStore(initial = mapOf("u1" to "Ada Lovelace"))
     val cache = cache<String, String> {
         store(store)
         writeStrategy(WriteStrategy.WRITE_THROUGH)
@@ -175,7 +152,7 @@ private suspend fun readThroughWriteThroughExample() {
 private suspend fun writeBackExample() {
     println("\n--- write-back ---")
 
-    val store = InMemoryUserStore()
+    val store = inMemoryCacheStore(initial = mapOf("u1" to "Ada Lovelace"))
     val cache = cache<String, String> {
         store(store)
         writeStrategy(WriteStrategy.WRITE_BACK)
