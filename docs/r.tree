@@ -12,4 +12,9 @@
         <toc-element topic="Cache-API.md"/>
         <toc-element topic="Cache-Examples.md"/>
     </toc-element>
+    <toc-element topic="Circuit-Breaker.md">
+        <toc-element topic="Circuit-Breaker-Configuration.md"/>
+        <toc-element topic="Circuit-Breaker-API.md"/>
+        <toc-element topic="Circuit-Breaker-Examples.md"/>
+    </toc-element>
 </instance-profile>
