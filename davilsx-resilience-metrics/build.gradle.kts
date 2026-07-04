@@ -30,6 +30,8 @@ kotlin {
             dependencies {
                 implementation(project(":davilsx-resilience-retry"))
                 implementation(project(":davilsx-resilience-bulkhead"))
+                implementation(project(":davilsx-resilience-circuitbreaker"))
+                implementation(project(":davilsx-resilience-cache"))
             }
         }
 

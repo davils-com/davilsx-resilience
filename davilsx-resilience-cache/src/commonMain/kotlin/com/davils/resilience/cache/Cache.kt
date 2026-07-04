@@ -26,6 +26,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
 
 /**
@@ -49,6 +50,18 @@ public class Cache<K, V> internal constructor(
     private val entries: ConcurrentHashMap<K, CacheEntry<V>> = concurrentHashMapOf()
     private val dirty: ConcurrentHashMap<K, V> = concurrentHashMapOf()
     private val insertionSeq = atomic(0L)
+    private val hitCount = atomic(0L)
+    private val missCount = atomic(0L)
+    private val putCount = atomic(0L)
+    private val removeCount = atomic(0L)
+    private val evictionCount = atomic(0L)
+    private val expirationCount = atomic(0L)
+    private val loadSuccessCount = atomic(0L)
+    private val loadFailureCount = atomic(0L)
+    private val writeSuccessCount = atomic(0L)
+    private val writeFailureCount = atomic(0L)
+    private val writeBackFlushedEntriesCount = atomic(0L)
+    private val clearCount = atomic(0L)
     private val maintenanceJobs = mutableListOf<Job>()
 
     init {
@@ -75,11 +88,11 @@ public class Cache<K, V> internal constructor(
     public suspend fun get(key: K): V? {
         checkDisposal()
         lookupAndTouch(key)?.let { value ->
-            eventBus.push(CacheEvent.CacheHit(key))
+            emitHit(key)
             return value
         }
 
-        eventBus.push(CacheEvent.CacheMiss(key))
+        emitMiss(key)
         return loadFromStore(key)
     }
 
@@ -108,11 +121,11 @@ public class Cache<K, V> internal constructor(
     public suspend fun get(key: K, loader: suspend (K) -> V): V {
         checkDisposal()
         lookupAndTouch(key)?.let { value ->
-            eventBus.push(CacheEvent.CacheHit(key))
+            emitHit(key)
             return value
         }
 
-        eventBus.push(CacheEvent.CacheMiss(key))
+        emitMiss(key)
         loadFromStore(key)?.let { return it }
 
         val value = loader(key)
@@ -130,7 +143,7 @@ public class Cache<K, V> internal constructor(
     public suspend fun put(key: K, value: V) {
         checkDisposal()
         insert(key, value, persistToStore = true)
-        eventBus.push(CacheEvent.CachePut(key))
+        emitPut(key)
     }
 
     /**
@@ -148,7 +161,7 @@ public class Cache<K, V> internal constructor(
             persistRemoval(key)
         }
 
-        eventBus.push(CacheEvent.CacheRemove(key))
+        emitRemove(key)
     }
 
     /**
@@ -182,6 +195,33 @@ public class Cache<K, V> internal constructor(
     public suspend fun keys(): Set<K> = entries.keys()
 
     /**
+     * Returns a snapshot of the current metrics.
+     *
+     * @since 1.0.0
+     */
+    public suspend fun getMetrics(): CacheMetrics = mutex.withLock {
+        val hits = hitCount.value
+        val misses = missCount.value
+        val lookups = hits + misses
+        CacheMetrics(
+            numberOfHits = hits,
+            numberOfMisses = misses,
+            numberOfPuts = putCount.value,
+            numberOfRemoves = removeCount.value,
+            numberOfEvictions = evictionCount.value,
+            numberOfExpirations = expirationCount.value,
+            numberOfLoadSuccesses = loadSuccessCount.value,
+            numberOfLoadFailures = loadFailureCount.value,
+            numberOfWriteSuccesses = writeSuccessCount.value,
+            numberOfWriteFailures = writeFailureCount.value,
+            numberOfWriteBackFlushedEntries = writeBackFlushedEntriesCount.value,
+            numberOfClears = clearCount.value,
+            currentSize = entries.size(),
+            hitRate = if (lookups == 0L) -1f else hits.toFloat() / lookups * 100f,
+        )
+    }
+
+    /**
      * Removes all entries from the cache.
      *
      * @since 1.0.0
@@ -199,7 +239,7 @@ public class Cache<K, V> internal constructor(
             }
         }
 
-        eventBus.push(CacheEvent.CacheCleared)
+        emitClear()
     }
 
     /**
@@ -225,6 +265,7 @@ public class Cache<K, V> internal constructor(
         }
 
         if (flushedCount > 0) {
+            writeBackFlushedEntriesCount.addAndGet(flushedCount.toLong())
             eventBus.push(CacheEvent.CacheWriteBackFlushed(flushedCount))
         }
     }
@@ -277,7 +318,7 @@ public class Cache<K, V> internal constructor(
         }
 
         entries.remove(key)
-        eventBus.push(CacheEvent.CacheExpiration(key))
+        emitExpiration(key)
         return null
     }
 
@@ -287,10 +328,10 @@ public class Cache<K, V> internal constructor(
         return try {
             val loaded = store.load(key) ?: return null
             insert(key, loaded, persistToStore = false)
-            eventBus.push(CacheEvent.CacheLoadSuccess(key))
+            emitLoadSuccess(key)
             loaded
         } catch (throwable: Throwable) {
-            eventBus.push(CacheEvent.CacheLoadFailure(key, throwable))
+            emitLoadFailure(key, throwable)
             null
         }
     }
@@ -317,7 +358,7 @@ public class Cache<K, V> internal constructor(
             val victim = data.evictionStrategy.selectVictim(snapshot) ?: break
             entries.remove(victim)
             dirty.remove(victim)
-            eventBus.push(CacheEvent.CacheEviction(victim))
+            emitEviction(victim)
         }
     }
 
@@ -345,10 +386,10 @@ public class Cache<K, V> internal constructor(
 
         return try {
             operation(store)
-            eventBus.push(CacheEvent.CacheWriteSuccess(key))
+            emitWriteSuccess(key)
             true
         } catch (throwable: Throwable) {
-            eventBus.push(CacheEvent.CacheWriteFailure(key, throwable))
+            emitWriteFailure(key, throwable)
             if (rethrow) throw throwable
             false
         }
@@ -364,9 +405,64 @@ public class Cache<K, V> internal constructor(
             if (entry.isExpired(data.expireAfterWrite, data.expireAfterAccess)) {
                 entries.remove(key)
                 dirty.remove(key)
-                eventBus.push(CacheEvent.CacheExpiration(key))
+                emitExpiration(key)
             }
         }
+    }
+
+    private suspend fun emitHit(key: K) {
+        hitCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheHit(key))
+    }
+
+    private suspend fun emitMiss(key: K) {
+        missCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheMiss(key))
+    }
+
+    private suspend fun emitPut(key: K) {
+        putCount.incrementAndGet()
+        eventBus.push(CacheEvent.CachePut(key))
+    }
+
+    private suspend fun emitRemove(key: K) {
+        removeCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheRemove(key))
+    }
+
+    private suspend fun emitEviction(key: K) {
+        evictionCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheEviction(key))
+    }
+
+    private suspend fun emitExpiration(key: K) {
+        expirationCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheExpiration(key))
+    }
+
+    private suspend fun emitLoadSuccess(key: K) {
+        loadSuccessCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheLoadSuccess(key))
+    }
+
+    private suspend fun emitLoadFailure(key: K, throwable: Throwable) {
+        loadFailureCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheLoadFailure(key, throwable))
+    }
+
+    private suspend fun emitWriteSuccess(key: K) {
+        writeSuccessCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheWriteSuccess(key))
+    }
+
+    private suspend fun emitWriteFailure(key: K, throwable: Throwable) {
+        writeFailureCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheWriteFailure(key, throwable))
+    }
+
+    private suspend fun emitClear() {
+        clearCount.incrementAndGet()
+        eventBus.push(CacheEvent.CacheCleared)
     }
 
     private suspend fun checkDisposal() {
