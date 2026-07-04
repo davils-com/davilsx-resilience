@@ -19,11 +19,13 @@ package com.davils.resilience.common
 import com.davils.kore.pattern.functional.loan.DisposableAsync
 import com.davils.kore.pattern.reactive.event.EventBus
 import com.davils.kore.pattern.reactive.event.EventMarker
+import com.davils.kore.pattern.reactive.event.EventTopic
 import com.davils.kore.pattern.reactive.event.eventBus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
+import kotlin.reflect.safeCast
 
 /**
  * Base class for all resilience components.
@@ -60,23 +62,39 @@ public abstract class ResilienceComponent<D : ResilienceComponentData, E : Event
     protected val mutex: Mutex = Mutex()
 
     /**
-     * The event bus used for publishing and subscribing to component events.
+     * The backing event bus that owns this component's single event topic.
+     *
+     * Initialized lazily because it depends on [data], which is provided by subclasses
+     * and is therefore not available while the base class is being constructed.
      *
      * @since 1.0.0
      */
-    protected val eventBus: EventBus<E> = eventBus(data.eventData.scope) {
-        replay = data.eventData.replay
-        onError = data.eventData.onError
-        overflowStrategy = data.eventData.overflowStrategy
-        extraBufferCapacity = data.eventData.extraBufferCapacity
+    private val bus: EventBus by lazy {
+        eventBus(data.eventData.scope) {
+            replay = data.eventData.replay
+            onError = data.eventData.onError
+            overflowStrategy = data.eventData.overflowStrategy
+            extraBufferCapacity = data.eventData.extraBufferCapacity
+            topic<EventMarker>(EVENT_TOPIC_NAME)
+        }
     }
+
+    /**
+     * The event topic used for publishing and subscribing to component events.
+     *
+     * All component events flow through this single topic. Events are published as
+     * [EventMarker] instances; type-specific delivery is handled by [subscribe].
+     *
+     * @since 1.0.0
+     */
+    protected val eventBus: EventTopic<EventMarker> by lazy { bus.topic(EVENT_TOPIC_NAME) }
 
     private fun isDisposedUnsafe(): Boolean = isDisposed
 
     /**
      * Disposes of the component and its resources.
      *
-     * This method is thread-safe. It publishes the [disposeEvent] and closes the [eventBus].
+     * This method is thread-safe. It publishes the [disposeEvent] and closes the underlying bus.
      *
      * @since 1.0.0
      */
@@ -87,7 +105,7 @@ public abstract class ResilienceComponent<D : ResilienceComponentData, E : Event
             isDisposed = true
         }
 
-        eventBus.dispose()
+        bus.dispose()
     }
 
     /**
@@ -112,7 +130,9 @@ public abstract class ResilienceComponent<D : ResilienceComponentData, E : Event
         eventType: KClass<R>,
         onError: (suspend (Throwable) -> Unit)? = null,
         on: suspend (R) -> Unit
-    ): Job = eventBus.subscribe(eventType, onError, on)
+    ): Job = eventBus.subscribe(onError) { event ->
+        eventType.safeCast(event)?.let { on(it) }
+    }
 
     /**
      * Subscribes to events of a specific type (reified).
@@ -127,4 +147,8 @@ public abstract class ResilienceComponent<D : ResilienceComponentData, E : Event
         noinline onError: (suspend (Throwable) -> Unit)? = null,
         noinline on: suspend (R) -> Unit
     ): Job = subscribe(R::class, onError, on)
+
+    private companion object {
+        private const val EVENT_TOPIC_NAME = "events"
+    }
 }

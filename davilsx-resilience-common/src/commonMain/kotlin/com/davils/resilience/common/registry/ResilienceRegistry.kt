@@ -19,6 +19,7 @@ package com.davils.resilience.common.registry
 import com.davils.kore.pattern.functional.loan.DisposableAsync
 import com.davils.kore.pattern.reactive.event.EventBus
 import com.davils.kore.pattern.reactive.event.EventMarker
+import com.davils.kore.pattern.reactive.event.EventTopic
 import com.davils.kore.pattern.reactive.event.eventBus
 import com.davils.resilience.common.ResilienceComponent
 import com.davils.resilience.common.ResilienceComponentBuilder
@@ -30,6 +31,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
+import kotlin.reflect.safeCast
 
 /**
  * An abstract base class for managing a registry of asynchronous disposable resilience components.
@@ -79,12 +81,16 @@ public abstract class ResilienceRegistry<
     private val defaultData = atomic<D?>(null)
     private val mutex = Mutex()
     private val registry = mutableMapOf<String, ResilienceRegistryEntry<C>>()
-    private val eventBus: EventBus<ResilienceRegistryEvent> = eventBus(registryData.eventData.scope) {
-        replay = registryData.eventData.replay
-        onError = registryData.eventData.onError
-        overflowStrategy = registryData.eventData.overflowStrategy
-        extraBufferCapacity = registryData.eventData.extraBufferCapacity
+    private val bus: EventBus by lazy {
+        eventBus(registryData.eventData.scope) {
+            replay = registryData.eventData.replay
+            onError = registryData.eventData.onError
+            overflowStrategy = registryData.eventData.overflowStrategy
+            extraBufferCapacity = registryData.eventData.extraBufferCapacity
+            topic<ResilienceRegistryEvent>(EVENT_TOPIC_NAME)
+        }
     }
+    private val eventBus: EventTopic<ResilienceRegistryEvent> by lazy { bus.topic(EVENT_TOPIC_NAME) }
 
     private suspend inline fun <R> withLock(
         block: (MutableMap<String, ResilienceRegistryEntry<C>>) -> R
@@ -164,7 +170,7 @@ public abstract class ResilienceRegistry<
     override suspend fun dispose() {
         eventBus.push(ResilienceRegistryEvent.RegistryDisposed)
         clear()
-        eventBus.dispose()
+        bus.dispose()
     }
 
     /**
@@ -181,7 +187,9 @@ public abstract class ResilienceRegistry<
         eventType: KClass<R>,
         onError: (suspend (Throwable) -> Unit)? = null,
         on: suspend (R) -> Unit
-    ): Job = eventBus.subscribe(eventType, onError, on)
+    ): Job = eventBus.subscribe(onError) { event ->
+        eventType.safeCast(event)?.let { on(it) }
+    }
 
     /**
      * Subscribes to events of a specific type from the registry's event bus using reified type parameters.
@@ -896,6 +904,7 @@ public abstract class ResilienceRegistry<
     }
 
     private companion object {
+        const val EVENT_TOPIC_NAME = "events"
         val NAME_REGEX = Regex("^[a-zA-Z0-9][a-zA-Z0-9._:-]*$")
     }
 }

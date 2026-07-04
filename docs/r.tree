@@ -7,4 +7,9 @@
                  start-page="Overview.md">
 
     <toc-element topic="Overview.md"/>
+    <toc-element topic="Cache.md">
+        <toc-element topic="Cache-Configuration.md"/>
+        <toc-element topic="Cache-API.md"/>
+        <toc-element topic="Cache-Examples.md"/>
+    </toc-element>
 </instance-profile>
