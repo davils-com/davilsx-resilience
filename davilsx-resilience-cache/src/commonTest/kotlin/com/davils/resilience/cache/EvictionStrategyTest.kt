@@ -4,13 +4,14 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
 class EvictionStrategyTest : FunSpec({
     context("Lru") {
         test("selects the entry that was accessed least recently") {
             val old = CacheEntry.create(value = "a", insertionSeq = 0L)
-            delay(20)
+            delay(20.milliseconds)
             val recent = CacheEntry.create(value = "b", insertionSeq = 1L)
 
             val victim = EvictionStrategy.Lru.selectVictim(mapOf("a" to old, "b" to recent))
@@ -20,9 +21,9 @@ class EvictionStrategyTest : FunSpec({
 
         test("respects a refreshed access time") {
             val first = CacheEntry.create(value = "a", insertionSeq = 0L)
-            delay(20)
+            delay(20.milliseconds)
             val second = CacheEntry.create(value = "b", insertionSeq = 1L)
-            delay(20)
+            delay(20.milliseconds)
             val refreshedFirst = first.accessed()
 
             val victim = EvictionStrategy.Lru.selectVictim(mapOf("a" to refreshedFirst, "b" to second))

@@ -41,7 +41,7 @@ class CacheEntryTest : FunSpec({
 
         test("refreshes access-based expiration") {
             val entry = CacheEntry.create(value = "v", insertionSeq = 0L)
-            delay(120)
+            delay(120.milliseconds)
 
             val refreshed = entry.accessed()
 
@@ -52,14 +52,14 @@ class CacheEntryTest : FunSpec({
     context("isExpired") {
         test("is not expired when both TTLs are disabled") {
             val entry = CacheEntry.create(value = "v", insertionSeq = 0L)
-            delay(50)
+            delay(50.milliseconds)
 
             entry.isExpired(Duration.ZERO, Duration.ZERO) shouldBe false
         }
 
         test("expires after write TTL elapses") {
             val entry = CacheEntry.create(value = "v", insertionSeq = 0L)
-            delay(120)
+            delay(120.milliseconds)
 
             entry.isExpired(expireAfterWrite = 100.milliseconds, expireAfterAccess = Duration.ZERO) shouldBe true
         }
@@ -72,7 +72,7 @@ class CacheEntryTest : FunSpec({
 
         test("expires after access TTL elapses") {
             val entry = CacheEntry.create(value = "v", insertionSeq = 0L)
-            delay(120)
+            delay(120.milliseconds)
 
             entry.isExpired(expireAfterWrite = Duration.ZERO, expireAfterAccess = 100.milliseconds) shouldBe true
         }

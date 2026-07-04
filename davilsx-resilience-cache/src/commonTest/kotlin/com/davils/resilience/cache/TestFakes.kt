@@ -36,7 +36,7 @@ internal class FakeCacheStore<K, V>(
  * A [CacheStore] whose operations always fail, used to verify error handling and failure events.
  */
 internal class FailingCacheStore<K, V> : CacheStore<K, V> {
-    override suspend fun load(key: K): V? = throw IllegalStateException("load failed")
+    override suspend fun load(key: K): V = throw IllegalStateException("load failed")
 
     override suspend fun store(key: K, value: V) {
         throw IllegalStateException("store failed")

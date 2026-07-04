@@ -140,18 +140,18 @@ class CacheTest : FunSpec({
             val cache = cache<String, String> { expireAfterWrite(100.milliseconds) }
             cache.put("k", "v")
             cache.get("k") shouldBe "v"
-            delay(200)
+            delay(200.milliseconds)
             cache.get("k").shouldBeNull()
         }
 
         test("expireAfterAccess is refreshed by access") {
             val cache = cache<String, String> { expireAfterAccess(150.milliseconds) }
             cache.put("k", "v")
-            delay(80)
+            delay(80.milliseconds)
             cache.get("k") shouldBe "v"
-            delay(80)
+            delay(80.milliseconds)
             cache.get("k") shouldBe "v"
-            delay(250)
+            delay(250.milliseconds)
             cache.get("k").shouldBeNull()
         }
 
@@ -162,7 +162,7 @@ class CacheTest : FunSpec({
             }
             cache.put("k", "v")
             withTimeout(2.seconds) {
-                while (cache.size() > 0L) delay(20)
+                while (cache.size() > 0L) delay(20.milliseconds)
             }
             cache.size() shouldBe 0L
         }

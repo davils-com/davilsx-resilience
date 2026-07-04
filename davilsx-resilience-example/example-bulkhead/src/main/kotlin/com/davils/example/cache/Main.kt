@@ -16,12 +16,15 @@
 
 package com.davils.example.cache
 
-import com.davils.resilience.cache.Cache
 import com.davils.resilience.cache.CacheEvent
-import com.davils.resilience.cache.EvictionStrategyType
-import com.davils.resilience.cache.WriteStrategy
 import com.davils.resilience.cache.cache
 import com.davils.resilience.cache.cacheRegistry
+import com.davils.resilience.cache.expiringCache
+import com.davils.resilience.cache.fifoCache
+import com.davils.resilience.cache.inMemoryCache
+import com.davils.resilience.cache.lruCache
+import com.davils.resilience.cache.writeBackCache
+import com.davils.resilience.cache.writeThroughCache
 import com.davils.resilience.cache.store.inMemoryCacheStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,10 +50,7 @@ suspend fun main() {
 private suspend fun basicUsageExample() {
     println("--- basic usage ---")
 
-    val cache = cache<String, String> {
-        maxSize = 100
-        maxSize(100)
-    }
+    val cache = inMemoryCache<String, String> { maxSize(100) }
 
     cache.put("key", "value")
     println("get(key) = ${cache.get("key")}")
@@ -89,10 +89,7 @@ private suspend fun loaderExample() {
 private suspend fun evictionExample() {
     println("\n--- eviction (LRU) ---")
 
-    val cache = cache<String, String> {
-        maxSize(2)
-        evictionStrategy(EvictionStrategyType.LRU)
-    }
+    val cache = lruCache<String, String>(maxSize = 2)
 
     cache.put("a", "1")
     cache.put("b", "2")
@@ -112,10 +109,10 @@ private suspend fun evictionExample() {
 private suspend fun expirationExample() {
     println("\n--- expiration (TTL) ---")
 
-    val cache = cache<String, String> {
-        expireAfterWrite(200.milliseconds)
-        cleanupInterval(100.milliseconds)
-    }
+    val cache = expiringCache<String, String>(
+        expireAfterWrite = 200.milliseconds,
+        cleanupInterval = 100.milliseconds,
+    )
 
     cache.put("token", "abc123")
     println("immediately after put = ${cache.get("token")}")
@@ -133,10 +130,7 @@ private suspend fun readThroughWriteThroughExample() {
     println("\n--- read-through / write-through ---")
 
     val store = inMemoryCacheStore(initial = mapOf("u1" to "Ada Lovelace"))
-    val cache = cache<String, String> {
-        store(store)
-        writeStrategy(WriteStrategy.WRITE_THROUGH)
-    }
+    val cache = writeThroughCache(store)
 
     println("read-through miss loaded from store = ${cache.get("u1")}")
 
@@ -153,9 +147,7 @@ private suspend fun writeBackExample() {
     println("\n--- write-back ---")
 
     val store = inMemoryCacheStore(initial = mapOf("u1" to "Ada Lovelace"))
-    val cache = cache<String, String> {
-        store(store)
-        writeStrategy(WriteStrategy.WRITE_BACK)
+    val cache = writeBackCache(store) {
         writeBack {
             flushInterval(2.seconds)
             batchSize(10)
@@ -179,9 +171,7 @@ private suspend fun writeBackExample() {
 private suspend fun eventsExample() {
     println("\n--- events ---")
 
-    val cache = cache<String, String> {
-        maxSize(1)
-        evictionStrategy(EvictionStrategyType.FIFO)
+    val cache = fifoCache<String, String>(maxSize = 1) {
         event {
             scope = CoroutineScope(Dispatchers.Default)
             replay = 0
