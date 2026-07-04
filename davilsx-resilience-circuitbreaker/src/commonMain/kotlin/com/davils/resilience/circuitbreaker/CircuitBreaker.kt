@@ -45,7 +45,7 @@ import kotlin.time.TimeSource
  * @since 1.0.0
  */
 public class CircuitBreaker internal constructor(
-    override val data: CircuitBreakerData,
+    public override val data: CircuitBreakerData,
 ) : ResilienceComponent<CircuitBreakerData, CircuitBreakerEvent>() {
     override val disposeEvent: CircuitBreakerEvent get() = CircuitBreakerEvent.Disposed
 
