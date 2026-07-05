@@ -19,15 +19,31 @@ package com.davils.resilience.ratelimiter
 import com.davils.kore.annotation.KoreDsl
 import com.davils.resilience.common.ResilienceComponentBuilder
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * DSL builder for configuring a [RateLimiter].
+ *
+ * @since 1.0.0
+ */
 @KoreDsl
 public class RateLimiterBuilder internal constructor() : ResilienceComponentBuilder<RateLimiterData>() {
 
+    /** Maximum number of permits available per [limitRefreshPeriod]. Defaults to 50. */
     public var limitForPeriod: Int = 50
-    public var limitRefreshPeriod: Duration = 500.nanoseconds
+
+    /** Duration after which the permit count is refreshed. Defaults to 500 milliseconds. */
+    public var limitRefreshPeriod: Duration = 500.milliseconds
+
+    /** Maximum time to wait for a permit before rejecting. Defaults to 5 seconds. */
     public var timeoutDuration: Duration = 5.seconds
+
+    /** Strategy applied when a permit is not immediately available. Defaults to [RateLimiterStrategy.WAIT]. */
+    public var strategy: RateLimiterStrategy = RateLimiterStrategy.WAIT
+
+    /** Window algorithm used to enforce the rate limit. Defaults to [RateLimiterWindowType.FIXED]. */
+    public var windowType: RateLimiterWindowType = RateLimiterWindowType.FIXED
 
     public fun limitForPeriod(limitForPeriod: Int) {
         this.limitForPeriod = limitForPeriod
@@ -45,13 +61,23 @@ public class RateLimiterBuilder internal constructor() : ResilienceComponentBuil
         this.timeoutDuration = timeout
     }
 
+    public fun strategy(strategy: RateLimiterStrategy) {
+        this.strategy = strategy
+    }
+
+    public fun windowType(windowType: RateLimiterWindowType) {
+        this.windowType = windowType
+    }
+
     override fun data(): RateLimiterData {
         val eventData = eventBuilder.produce()
         return RateLimiterData(
             limitForPeriod = limitForPeriod,
             limitRefreshPeriod = limitRefreshPeriod,
             timeoutDuration = timeoutDuration,
-            eventData = eventData
+            strategy = strategy,
+            windowType = windowType,
+            eventData = eventData,
         )
     }
 }

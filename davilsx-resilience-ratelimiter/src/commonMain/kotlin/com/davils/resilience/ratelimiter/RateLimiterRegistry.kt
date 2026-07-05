@@ -20,14 +20,24 @@ import com.davils.resilience.common.registry.ResilienceRegistry
 import com.davils.resilience.common.registry.ResilienceRegistryBuilder
 import com.davils.resilience.common.registry.ResilienceRegistryData
 
+/**
+ * Registry for named [RateLimiter] instances.
+ *
+ * @since 1.0.0
+ */
 public class RateLimiterRegistry(
-    override val registryData: ResilienceRegistryData
+    override val registryData: ResilienceRegistryData,
 ) : ResilienceRegistry<RateLimiterEvent, RateLimiterData, RateLimiterBuilder, RateLimiter>() {
     override fun createBuilder(): RateLimiterBuilder = RateLimiterBuilder()
 
     override fun createComponent(data: RateLimiterData): RateLimiter = RateLimiter(data)
 }
 
+/**
+ * Creates a [RateLimiterRegistry] using the DSL builder.
+ *
+ * @since 1.0.0
+ */
 public fun rateLimiterRegistry(builder: ResilienceRegistryBuilder.() -> Unit): RateLimiterRegistry {
     val registryBuilder = ResilienceRegistryBuilder()
     registryBuilder.builder()

@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-package com.davils.resilience.ratelimiter
+package com.davils.resilience.metrics.ratelimiter
 
-/**
- * Thrown when a rate-limited operation is rejected because no permits are available.
- *
- * @since 1.0.0
- */
-public class RequestNotPermittedException(message: String? = null) :
-    RuntimeException(message ?: "Request was not permitted due to rate limit being exceeded")
+import com.davils.resilience.metrics.MetricsCollector
+import com.davils.resilience.ratelimiter.RateLimiter
+import com.davils.resilience.ratelimiter.RateLimiterMetrics
+
+public class RateLimiterMetricsCollector internal constructor(
+    override val component: RateLimiter,
+) : MetricsCollector<RateLimiter>() {
+    override fun scrape() {
+        // no-op — getMetrics() is suspend; async collection can be added later
+    }
+
+    public suspend fun allMetrics(): RateLimiterMetrics = component.getMetrics()
+}

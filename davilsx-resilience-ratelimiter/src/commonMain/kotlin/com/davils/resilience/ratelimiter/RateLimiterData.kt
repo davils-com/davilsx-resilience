@@ -22,13 +22,19 @@ import com.davils.resilience.common.ResilienceComponentData
 import com.davils.resilience.common.event.ResilienceEventData
 import kotlin.time.Duration
 
+/**
+ * Immutable configuration for a [RateLimiter].
+ *
+ * @since 1.0.0
+ */
 @ConsistentCopyVisibility
 public data class RateLimiterData internal constructor(
     val limitForPeriod: Int,
     val limitRefreshPeriod: Duration,
     val timeoutDuration: Duration,
-
-    override val eventData: ResilienceEventData
+    val strategy: RateLimiterStrategy,
+    val windowType: RateLimiterWindowType,
+    override val eventData: ResilienceEventData,
 ) : ResilienceComponentData {
     override fun validate(): DslVerification = verifyDsl {
         if (limitForPeriod < 1) {

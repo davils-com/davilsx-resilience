@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-package com.davils.resilience.ratelimiter
+package com.davils.resilience.metrics.ratelimiter
+
+import com.davils.resilience.ratelimiter.RateLimiter
 
 /**
- * Thrown when a rate-limited operation is rejected because no permits are available.
+ * Provides access to the [RateLimiterMetricsCollector] for a [RateLimiter].
  *
  * @since 1.0.0
  */
-public class RequestNotPermittedException(message: String? = null) :
-    RuntimeException(message ?: "Request was not permitted due to rate limit being exceeded")
+public val RateLimiter.metrics: RateLimiterMetricsCollector
+    get() = RateLimiterMetricsCollector(this)
+
+public fun RateLimiter.metrics(block: RateLimiterMetricsCollector.() -> Unit): RateLimiterMetricsCollector =
+    metrics.apply(block)
+
+public fun RateLimiter.metrics(): RateLimiterMetricsCollector = metrics

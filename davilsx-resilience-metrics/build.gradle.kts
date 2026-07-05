@@ -32,6 +32,7 @@ kotlin {
                 implementation(project(":davilsx-resilience-bulkhead"))
                 implementation(project(":davilsx-resilience-circuitbreaker"))
                 implementation(project(":davilsx-resilience-cache"))
+                implementation(project(":davilsx-resilience-ratelimiter"))
             }
         }
 

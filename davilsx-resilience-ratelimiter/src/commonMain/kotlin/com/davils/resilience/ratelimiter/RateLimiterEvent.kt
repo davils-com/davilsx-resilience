@@ -19,9 +19,22 @@ package com.davils.resilience.ratelimiter
 import com.davils.kore.pattern.reactive.event.EventMarker
 import kotlin.time.Duration
 
-
+/**
+ * Events emitted by a [RateLimiter].
+ *
+ * @since 1.0.0
+ */
 public sealed class RateLimiterEvent : EventMarker() {
+    /** Emitted when permits were successfully acquired. */
     public data class SuccessfulAcquire(public val permits: Int) : RateLimiterEvent()
+
+    /**
+     * Emitted when permits could not be acquired.
+     *
+     * @property waitDuration The wait time that would have been required to acquire the permits.
+     */
     public data class FailedAcquire(public val permits: Int, public val waitDuration: Duration) : RateLimiterEvent()
+
+    /** Emitted when the rate limiter is disposed. */
     public data object RateLimiterDisposed : RateLimiterEvent()
 }
