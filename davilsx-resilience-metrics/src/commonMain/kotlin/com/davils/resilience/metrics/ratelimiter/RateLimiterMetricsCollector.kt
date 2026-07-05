@@ -19,36 +19,13 @@ package com.davils.resilience.metrics.ratelimiter
 import com.davils.resilience.metrics.MetricsCollector
 import com.davils.resilience.ratelimiter.RateLimiter
 import com.davils.resilience.ratelimiter.RateLimiterMetrics
-import kotlinx.coroutines.runBlocking
 
-/**
- * Collects metrics from a [RateLimiter] component.
- *
- * @since 1.0.0
- */
 public class RateLimiterMetricsCollector internal constructor(
     override val component: RateLimiter,
 ) : MetricsCollector<RateLimiter>() {
-    private var latestMetrics: RateLimiterMetrics? = null
-
     override fun scrape() {
-        latestMetrics = runBlocking { component.getMetrics() }
+        // no-op — getMetrics() is suspend; async collection can be added later
     }
 
-    /**
-     * Scrapes and returns the latest metrics snapshot.
-     *
-     * @since 1.0.0
-     */
-    public fun refresh(): RateLimiterMetrics {
-        scrape()
-        return latestMetrics ?: runBlocking { component.getMetrics() }
-    }
-
-    /**
-     * Returns the most recently scraped metrics snapshot, or `null` if [refresh] has not been called.
-     *
-     * @since 1.0.0
-     */
-    public fun metrics(): RateLimiterMetrics? = latestMetrics
+    public suspend fun allMetrics(): RateLimiterMetrics = component.getMetrics()
 }

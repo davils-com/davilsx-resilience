@@ -7,7 +7,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class RateLimiterMetricsCollectorTest : FunSpec({
-    test("scrape captures rate limiter metrics") {
+    test("allMetrics reflects successful and failed acquisitions") {
         val limiter = fixedRateLimiter(limit = 2, period = 500.milliseconds) {
             timeoutDuration = Duration.ZERO
         }
@@ -15,10 +15,22 @@ class RateLimiterMetricsCollectorTest : FunSpec({
         limiter.tryAcquire()
         limiter.tryAcquire()
 
-        val collector = limiter.metrics()
-        val metrics = collector.refresh()
-        metrics.numberOfSuccessfulAcquires shouldBe 2
-        metrics.numberOfFailedAcquires shouldBe 1
-        metrics.limitForPeriod shouldBe 2
+        val snapshot = limiter.metrics.allMetrics()
+        snapshot.numberOfSuccessfulAcquires shouldBe 2
+        snapshot.numberOfFailedAcquires shouldBe 1
+        snapshot.limitForPeriod shouldBe 2
+    }
+
+    test("metrics extension provides collector access") {
+        val limiter = fixedRateLimiter(limit = 2, period = 500.milliseconds) {
+            timeoutDuration = Duration.ZERO
+        }
+        limiter.tryAcquire()
+
+        limiter.metrics().allMetrics().numberOfSuccessfulAcquires shouldBe 1
+
+        var configured = false
+        limiter.metrics { configured = true }
+        configured shouldBe true
     }
 })

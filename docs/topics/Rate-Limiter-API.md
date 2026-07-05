@@ -47,7 +47,7 @@ val api = registry.create("api") {
 ```kotlin
 import com.davils.resilience.metrics.ratelimiter.metrics
 
-val snapshot = limiter.metrics().refresh()
+val snapshot = limiter.metrics.allMetrics()
 ```
 
 ## Ktor plugin
