@@ -16,15 +16,17 @@
 
 package com.davils.resilience.timelimiter
 
+import com.davils.kore.pattern.reactive.event.EventMarker
+
 /**
- * Timeout enforcement strategy for a [TimeLimiter].
+ * Events emitted by a [TimeLimiter].
  *
  * @since 1.0.0
  */
-public enum class TimeoutStrategy {
-    /** Cancels the guarded block when the timeout expires. */
-    HARD,
+public sealed class TimeLimiterEvent : EventMarker() {
+    /** Emitted when an execution exceeds the configured timeout. */
+    public data class TimeoutExceeded(public val timeoutMs: Long) : TimeLimiterEvent()
 
-    /** Runs the block in a detached coroutine and stops waiting on timeout. */
-    SOFT,
+    /** Emitted when the time limiter is disposed. */
+    public data object TimeLimiterDisposed : TimeLimiterEvent()
 }

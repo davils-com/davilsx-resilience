@@ -22,4 +22,9 @@
         <toc-element topic="Rate-Limiter-API.md"/>
         <toc-element topic="Rate-Limiter-Examples.md"/>
     </toc-element>
+    <toc-element topic="Time-Limiter.md">
+        <toc-element topic="Time-Limiter-Configuration.md"/>
+        <toc-element topic="Time-Limiter-API.md"/>
+        <toc-element topic="Time-Limiter-Examples.md"/>
+    </toc-element>
 </instance-profile>

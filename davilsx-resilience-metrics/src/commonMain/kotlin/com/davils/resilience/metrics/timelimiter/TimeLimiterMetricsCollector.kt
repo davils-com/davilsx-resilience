@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package com.davils.resilience.timelimiter
+package com.davils.resilience.metrics.timelimiter
 
-/**
- * Timeout enforcement strategy for a [TimeLimiter].
- *
- * @since 1.0.0
- */
-public enum class TimeoutStrategy {
-    /** Cancels the guarded block when the timeout expires. */
-    HARD,
+import com.davils.resilience.metrics.MetricsCollector
+import com.davils.resilience.timelimiter.TimeLimiter
+import com.davils.resilience.timelimiter.TimeLimiterMetrics
 
-    /** Runs the block in a detached coroutine and stops waiting on timeout. */
-    SOFT,
+public class TimeLimiterMetricsCollector internal constructor(
+    override val component: TimeLimiter,
+) : MetricsCollector<TimeLimiter>() {
+    override fun scrape() {
+        // no-op — getMetrics() is suspend; async collection can be added later
+    }
+
+    public suspend fun allMetrics(): TimeLimiterMetrics = component.getMetrics()
 }

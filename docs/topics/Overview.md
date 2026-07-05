@@ -11,7 +11,7 @@
 | Bulkhead | Concurrency limiting |
 | Retry | Retry with backoff strategies |
 | [Rate limiter](Rate-Limiter.md) | Request rate control |
-| Time limiter | Execution time bounds |
+| [Time limiter](Time-Limiter.md) | Execution time bounds |
 
 ## Cache documentation
 
@@ -37,3 +37,11 @@ Start with the [Rate Limiter overview](Rate-Limiter.md) for installation and qui
 - [Configuration](Rate-Limiter-Configuration.md) — DSL settings, strategies, defaults, and validation
 - [API reference](Rate-Limiter-API.md) — runtime operations, events, metrics, registry, Ktor plugin
 - [Examples](Rate-Limiter-Examples.md) — practical recipes with `fixedRateLimiter`, `slidingWindowRateLimiter`, and more
+
+## Time Limiter documentation
+
+Start with the [Time Limiter overview](Time-Limiter.md) for installation and quick start, then explore:
+
+- [Configuration](Time-Limiter-Configuration.md) — DSL settings, strategies, defaults, and validation
+- [API reference](Time-Limiter-API.md) — runtime operations, events, metrics, registry, Ktor plugin
+- [Examples](Time-Limiter-Examples.md) — practical recipes with `hardTimeLimiter`, `softTimeLimiter`, and more
