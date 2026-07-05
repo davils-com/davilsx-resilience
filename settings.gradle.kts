@@ -12,6 +12,7 @@ include(":davilsx-resilience-ratelimiter")
 include(":davilsx-resilience-circuitbreaker")
 include(":davilsx-resilience-common")
 include(":davilsx-resilience-micrometer")
+include(":davilsx-resilience-ktor")
 include(":davilsx-resilience-metrics")
 
 // Example
