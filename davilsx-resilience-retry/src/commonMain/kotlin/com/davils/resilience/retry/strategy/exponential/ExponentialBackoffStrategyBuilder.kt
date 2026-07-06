@@ -39,6 +39,12 @@ public class ExponentialBackoffStrategyBuilder internal constructor() : DslValid
      * @since 1.0.0
      */
     public var maxDelay: Duration = 60000.milliseconds
+        set(value) {
+            if (value.isNegative()) {
+                throw IllegalArgumentException("maxDelay must be non-negative")
+            }
+            field = value
+        }
 
     /**
      * The factor by which the delay increases with each attempt.
@@ -48,6 +54,12 @@ public class ExponentialBackoffStrategyBuilder internal constructor() : DslValid
      * @since 1.0.0
      */
     public var multiplier: Double = 2.0
+        set(value) {
+            if (value <= 0.0) {
+                throw IllegalArgumentException("multiplier must be greater than 0")
+            }
+            field = value
+        }
 
     /**
      * The initial duration to wait before the first retry attempt.
@@ -57,6 +69,12 @@ public class ExponentialBackoffStrategyBuilder internal constructor() : DslValid
      * @since 1.0.0
      */
     public var initialDelay: Duration = 1000.milliseconds
+        set(value) {
+            if (value.isNegative()) {
+                throw IllegalArgumentException("initialDelay must be non-negative")
+            }
+            field = value
+        }
 
     /**
      * Sets the maximum duration to wait between retry attempts.
