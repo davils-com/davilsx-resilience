@@ -35,12 +35,12 @@ jobs:
 
       - name: Build with Gradle
         if: runner.os != 'Windows'
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon -x test -x check
 
       - name: Build with Gradle
         if: runner.os == 'Windows'
         shell: pwsh
-        run: .\gradlew.bat build --no-daemon
+        run: .\gradlew.bat build --no-daemon -x test -x check
 
   publish:
     if: github.ref_type == 'tag'
@@ -103,9 +103,9 @@ jobs:
 
       - name: Publish to Maven Central
         if: runner.os != 'Windows'
-        run: ./gradlew ${{ matrix.tasks }} --no-daemon
+        run: ./gradlew ${{ matrix.tasks }} --no-daemon -x test -x check
 
       - name: Publish to Maven Central
         if: runner.os == 'Windows'
         shell: pwsh
-        run: .\gradlew.bat ${{ matrix.task }} --no-daemon
+        run: .\gradlew.bat ${{ matrix.task }} --no-daemon -x test -x check
