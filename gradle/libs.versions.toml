@@ -29,8 +29,9 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 # atomicfu
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 
-# micrometer
-micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
+# ktor
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 
 # kotest
 kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
@@ -64,8 +65,8 @@ resilience-common-common-api = [
     "kotlinx-atomicfu"
 ]
 
-resilience-micrometer-jvm-impl = [
-    "micrometer-registry-prometheus"
+resilience-ktor-common-impl = [
+    "ktor-server-core"
 ]
 
 resilience-tests-common-impl = [
