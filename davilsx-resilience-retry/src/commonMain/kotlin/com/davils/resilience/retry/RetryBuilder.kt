@@ -116,6 +116,16 @@ public class RetryBuilder internal constructor() : ResilienceComponentBuilder<Re
         this.predicate = predicate
     }
 
+    /**
+     * Sets whether the retry should stop after [maxAttempts] is reached.
+     *
+     * @param failAfterMaxRetries When true, stop retrying after [maxAttempts]; when false, retry indefinitely.
+     * @since 1.0.0
+     */
+    public fun failAfterMaxRetries(failAfterMaxRetries: Boolean) {
+        this.failAfterMaxRetries = failAfterMaxRetries
+    }
+
     override fun data(): RetryData {
         val eventData = eventBuilder.produce()
         return RetryData(

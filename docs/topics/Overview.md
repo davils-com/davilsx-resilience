@@ -9,7 +9,7 @@
 | [Cache](Cache.md) | Thread-safe caching with eviction, TTL, read/write-through, and write-back |
 | [Circuit Breaker](Circuit-Breaker.md) | Failure protection with sliding-window thresholds and state machine |
 | Bulkhead | Concurrency limiting |
-| Retry | Retry with backoff strategies |
+| Retry | [Retry with backoff strategies](Retry.md) |
 | [Rate limiter](Rate-Limiter.md) | Request rate control |
 | [Time limiter](Time-Limiter.md) | Execution time bounds |
 
@@ -45,3 +45,11 @@ Start with the [Time Limiter overview](Time-Limiter.md) for installation and qui
 - [Configuration](Time-Limiter-Configuration.md) — DSL settings, strategies, defaults, and validation
 - [API reference](Time-Limiter-API.md) — runtime operations, events, metrics, registry, Ktor plugin
 - [Examples](Time-Limiter-Examples.md) — practical recipes with `hardTimeLimiter`, `softTimeLimiter`, and more
+
+## Retry documentation
+
+Start with the [Retry overview](Retry.md) for installation and quick start, then explore:
+
+- [Configuration](Retry-Configuration.md) — DSL settings, predicates, backoff strategies, and validation
+- [API reference](Retry-API.md) — runtime operations, events, metrics, registry
+- [Examples](Retry-Examples.md) — practical recipes with `fixedDelayRetry`, `exponentialRetry`, and more

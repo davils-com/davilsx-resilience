@@ -25,8 +25,7 @@ import com.davils.resilience.retry.event.RetryEvent
  * A specialized [ResilienceRegistry] for storing and managing [Retry] instances.
  *
  * This registry allows for centralized management of retry configurations across the application.
- * By default, it provides a global instance through the companion object, but multiple instances
- * can be created for use in different contexts, such as Dependency Injection.
+ * Create instances with [retryRegistry] and share them through dependency injection or application scope.
  *
  * @param registryData Configuration data for the registry.
  * @since 1.0.0
