@@ -46,6 +46,12 @@ public class JitterBackoffStrategyBuilder internal constructor(
      * @since 1.0.0
      */
     public var factor: Double = 0.5
+        set(value) {
+            if (value <= 0.0 || value > 1.0) {
+                throw IllegalArgumentException("factor must be between 0.0 (exclusive) and 1.0")
+            }
+            field = value
+        }
 
     /**
      * The jitter algorithm to apply.
