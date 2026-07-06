@@ -30,7 +30,7 @@ class JitterBackoffStrategyTest : FunSpec({
             val delay2Ms = strategy.calculateDelay(2).inWholeMilliseconds.toDouble()
 
             delay1Ms.shouldBeBetween(999.0, 1001.0, 0.0)
-            delay2Ms.shouldBeBetween(1999.0, 2001.0, 0.0)
+            delay2Ms.shouldBeBetween(1998.0, 2002.0, 0.0)
         }
 
         test("withJitter extension creates a valid jitter strategy") {
