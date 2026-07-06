@@ -39,6 +39,12 @@ public class ConstantBackoffStrategyBuilder internal constructor() : DslValidato
      * @since 1.0.0
      */
     public var delay: Duration = 1000.milliseconds
+        set(value) {
+            if (value.isNegative()) {
+                throw IllegalArgumentException("delay must be non-negative")
+            }
+            field = value
+        }
 
     /**
      * Sets the fixed delay duration between retry attempts.
