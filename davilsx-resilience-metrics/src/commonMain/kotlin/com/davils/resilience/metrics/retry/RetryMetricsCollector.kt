@@ -17,19 +17,53 @@
 package com.davils.resilience.metrics.retry
 
 import com.davils.resilience.metrics.MetricsCollector
+import com.davils.resilience.metrics.retry.data.RetryCallMetrics
 import com.davils.resilience.metrics.retry.data.RetryMetricsData
+import com.davils.resilience.metrics.retry.data.RetryPerformanceMetrics
+import com.davils.resilience.metrics.retry.data.RetryRealtimeMetrics
+import com.davils.resilience.metrics.retry.data.RetryTryMetrics
 import com.davils.resilience.retry.Retry
-import com.davils.resilience.retry.event.RetryEvent
 
 public class RetryMetricsCollector internal constructor(
-    override val component: Retry
+    override val component: Retry,
 ) : MetricsCollector<Retry>() {
     override fun scrape() {
-
+        // no-op — allMetrics() is suspend; async collection can be added later
     }
 
-    public fun allMetrics(): RetryMetricsData {
-        TODO("Not yet implemented")
-    }
+    public suspend fun allMetrics(): RetryMetricsData {
+        val snapshot = component.getMetrics()
+        val totalCalls = snapshot.totalCalls
+        val attemptsPerCall = if (totalCalls == 0L) {
+            0.0
+        } else {
+            snapshot.totalAttempts.toDouble() / totalCalls
+        }
 
+        return RetryMetricsData(
+            callMetrics = RetryCallMetrics(
+                totalCalls = snapshot.totalCalls,
+                successfulCalls = snapshot.successfulCalls,
+                exhaustedCalls = snapshot.exhaustedCalls,
+                failedNonRetryableCalls = snapshot.failedNonRetryableCalls,
+                canceledCalls = snapshot.canceledCalls,
+            ),
+            tryMetrics = RetryTryMetrics(
+                totalAttempts = snapshot.totalAttempts,
+                successfulAttempts = snapshot.successfulAttempts,
+                failedAttempts = snapshot.failedAttempts,
+                attemptsPerCall = attemptsPerCall,
+            ),
+            performanceMetrics = RetryPerformanceMetrics(
+                callDuration = snapshot.totalCallDuration,
+                attemptDuration = snapshot.totalAttemptDuration,
+                backoffDuration = snapshot.totalBackoffDuration,
+                totalBackoffDuration = snapshot.totalBackoffDuration,
+            ),
+            realtimeMetrics = RetryRealtimeMetrics(
+                callsActive = snapshot.callsActive,
+                callsWaiting = snapshot.callsWaiting,
+            ),
+        )
+    }
 }
