@@ -291,11 +291,10 @@ public class Cache<K, V> internal constructor(
     }
 
     private suspend fun lookupAndTouch(key: K): V? {
-        lookupEntry(key)?.let { entry ->
-            entries.computeIfPresent(key) { _, current -> Option.some(current.accessed()) }
-            return entry.value
-        }
-        return null
+        val entry = lookupEntry(key) ?: return null
+        val touched = entry.accessed()
+        entries.put(key, touched)
+        return touched.value
     }
 
     private fun scheduleMaintenance(interval: Duration, block: suspend () -> Unit) {

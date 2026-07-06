@@ -71,7 +71,13 @@ public interface EvictionStrategy {
         override fun <K> selectVictim(entries: Map<K, CacheEntry<*>>): K? {
             if (entries.isEmpty()) return null
 
-            return entries.maxBy { (_, entry) -> entry.lastAccessedAt.elapsedNow() }.key
+            // ponytail: coarse monotonic clocks (e.g. wasmJS) can report equal elapsed times;
+            // break ties by access count, then insertion order.
+            return entries.maxWith(
+                compareBy<Map.Entry<K, CacheEntry<*>>> { it.value.lastAccessedAt.elapsedNow() }
+                    .thenBy { -it.value.accessCount }
+                    .thenBy { -it.value.insertionSeq },
+            ).key
         }
     }
 

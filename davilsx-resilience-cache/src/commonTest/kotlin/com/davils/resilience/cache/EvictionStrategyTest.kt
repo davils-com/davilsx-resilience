@@ -34,6 +34,16 @@ class EvictionStrategyTest : FunSpec({
         test("returns null for an empty map") {
             EvictionStrategy.Lru.selectVictim(emptyMap<String, CacheEntry<*>>()).shouldBeNull()
         }
+
+        test("breaks elapsed-time ties by access count when the clock does not advance") {
+            val accessedAt = TimeSource.Monotonic.markNow()
+            val entries = mapOf(
+                "a" to entry(accessedAt = accessedAt, insertionSeq = 0L, accessCount = 2L),
+                "b" to entry(accessedAt = accessedAt, insertionSeq = 1L, accessCount = 1L),
+            )
+
+            EvictionStrategy.Lru.selectVictim(entries) shouldBe "b"
+        }
     }
 
     context("Lfu") {
@@ -93,12 +103,15 @@ class EvictionStrategyTest : FunSpec({
     }
 })
 
-private fun entry(insertionSeq: Long, accessCount: Long): CacheEntry<String> {
-    val now = TimeSource.Monotonic.markNow()
+private fun entry(
+    insertionSeq: Long,
+    accessCount: Long,
+    accessedAt: kotlin.time.TimeMark = TimeSource.Monotonic.markNow(),
+): CacheEntry<String> {
     return CacheEntry(
         value = "value-$insertionSeq",
-        createdAt = now,
-        lastAccessedAt = now,
+        createdAt = accessedAt,
+        lastAccessedAt = accessedAt,
         accessCount = accessCount,
         insertionSeq = insertionSeq,
     )
