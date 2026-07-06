@@ -613,17 +613,17 @@ public abstract class ResilienceRegistry<
      */
     public suspend fun clear() {
         val removedEntries = withLock { map ->
-            val entries = map.entries.toList()
+            val entries = map.toList()
             map.clear()
             entries
         }
 
-        removedEntries.forEach { entry ->
-            eventBus.push(ResilienceRegistryEvent.EntryRemoved(entry.key, entry.value))
+        removedEntries.forEach { (name, entry) ->
+            eventBus.push(ResilienceRegistryEvent.EntryRemoved(name, entry))
         }
 
         eventBus.push(ResilienceRegistryEvent.RegistryCleared)
-        disposeAll(removedEntries.map { it.value.component })
+        disposeAll(removedEntries.map { it.second.component })
     }
 
     /**
