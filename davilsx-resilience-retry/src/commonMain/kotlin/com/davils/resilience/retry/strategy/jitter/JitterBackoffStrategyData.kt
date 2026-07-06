@@ -69,7 +69,7 @@ public data class JitterBackoffStrategyData internal constructor(
     val cap: Duration
 ) : DslVerifiableData {
     override fun validate(): DslVerification = verifyDsl {
-        if (factor > 0.0 && factor <= 1.0) {
+        if (factor <= 0.0 || factor > 1.0) {
             fail("factor must be greater than 0.0 and less than or equal to 1.0", "factor")
         }
 
