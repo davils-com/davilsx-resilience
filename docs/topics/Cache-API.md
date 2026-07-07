@@ -72,10 +72,11 @@ public fun <K, V> delegatingCacheStore(
 
 | Method | Events | Store on miss | Notes |
 |--------|--------|---------------|-------|
-| `get(key)` | Hit / Miss | Read-through load | Returns `null` if absent |
-| `getOrNull(key)` | None | No | Cache-only lookup |
+| `get(key)` | Hit / Miss | Read-through load | Returns `null` if absent; updates access metadata |
+| `getOrNull(key)` | None | No | Cache-only lookup; does not update access metadata |
+| `peek(key)` | None | No | Alias for [getOrNull]; non-touching read |
 | `get(key, loader)` | Hit / Miss | Read-through, then loader | Loader runs only if store returns null |
-| `contains(key)` | None | No | Checks validity including TTL |
+| `contains(key)` | None | No | Checks validity including TTL; does not update access metadata |
 
 ```kotlin
 // Read-through: store checked before returning null
@@ -256,7 +257,7 @@ job.cancel()
 
 Filter by specific event types using separate subscriptions or `when` inside the handler.
 
-`getOrNull` and `contains` do **not** emit hit/miss events.
+`getOrNull`, `peek`, and `contains` do **not** emit hit/miss events or refresh LRU/LFU/expiry access metadata.
 
 ## Thread safety
 

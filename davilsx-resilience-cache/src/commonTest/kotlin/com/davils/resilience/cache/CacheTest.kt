@@ -38,6 +38,29 @@ class CacheTest : FunSpec({
             store.loadCount shouldBe 0
         }
 
+        test("getOrNull does not refresh expireAfterAccess") {
+            val cache = cache<String, String> { expireAfterAccess(150.milliseconds) }
+            cache.put("k", "v")
+            delay(80.milliseconds)
+            cache.getOrNull("k") shouldBe "v"
+            delay(80.milliseconds)
+            cache.getOrNull("k").shouldBeNull()
+        }
+
+        test("peek does not affect LRU eviction order") {
+            val cache = cache<String, String> {
+                maxSize(2)
+                evictionStrategy(EvictionStrategyType.LRU)
+            }
+            cache.put("a", "1")
+            cache.put("b", "2")
+            cache.peek("a")
+            cache.put("c", "3")
+
+            cache.contains("a") shouldBe false
+            cache.contains("b") shouldBe true
+        }
+
         test("put overwrites an existing value") {
             val cache = cache<String, String> { }
             cache.put("k", "v1")

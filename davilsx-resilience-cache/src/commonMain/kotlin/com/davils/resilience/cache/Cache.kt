@@ -102,7 +102,8 @@ public class Cache<K, V> internal constructor(
     /**
      * Returns the value associated with the given [key], or `null` if no valid entry exists.
      *
-     * Unlike [get], this method does not emit cache events.
+     * Unlike [get], this method does not emit cache events and does not update eviction or
+     * expiration metadata. For the same behavior under another name, see [peek].
      *
      * @param key The key to look up.
      * @return The cached value, or `null` if no valid entry exists.
@@ -110,8 +111,20 @@ public class Cache<K, V> internal constructor(
      */
     public suspend fun getOrNull(key: K): V? {
         checkDisposal()
-        return lookupAndTouch(key)
+        return lookupValue(key)
     }
+
+    /**
+     * Returns the value associated with the given [key] without updating access metadata.
+     *
+     * Equivalent to [getOrNull]: no cache events, no store read-through, and no refresh of
+     * LRU/LFU recency or [CacheData.expireAfterAccess].
+     *
+     * @param key The key to look up.
+     * @return The cached value, or `null` if no valid entry exists.
+     * @since 1.0.0
+     */
+    public suspend fun peek(key: K): V? = getOrNull(key)
 
     /**
      * Returns the value associated with the given [key], loading it with [loader] on a cache miss.
@@ -494,6 +507,8 @@ public class Cache<K, V> internal constructor(
         entries.put(key, touched)
         return touched.value
     }
+
+    private suspend fun lookupValue(key: K): V? = lookupEntry(key)?.value
 
     private fun scheduleMaintenance(interval: Duration, block: suspend () -> Unit) {
         maintenanceJobs += data.eventData.scope.launch {
