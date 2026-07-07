@@ -109,8 +109,8 @@ Use `get(key, loader)` when a miss should read through the backing [CacheStore] 
 | Method | Description |
 |--------|-------------|
 | `put(key, value)` | Inserts or replaces; may evict; persists per write strategy |
-| `remove(key)` | Removes from cache and dirty buffer; mirrors removal in write-through mode |
-| `clear()` | Removes all entries; mirrors removals in write-through mode |
+| `remove(key)` | Removes from cache; flushes buffered write-back value first; mirrors removal in write-through mode |
+| `clear()` | Removes all entries; flushes write-back dirty entries first; mirrors removals in write-through mode |
 | `flush()` | Flushes write-back dirty entries to the store (no-op for write-through) |
 
 ### Introspection
@@ -185,7 +185,7 @@ public enum class WriteStrategy {
 | Mode | When store is called |
 |------|----------------------|
 | Write-through | Immediately on `put`; `remove`/`clear` mirror synchronously |
-| Write-back | Buffered; flushed on interval, batch threshold, `flush()`, or dispose |
+| Write-back | Buffered; flushed on interval, batch threshold, eviction, expiration, `clear()`, `remove()`, `flush()`, or dispose |
 
 Removals are mirrored to the store only in **write-through** mode.
 

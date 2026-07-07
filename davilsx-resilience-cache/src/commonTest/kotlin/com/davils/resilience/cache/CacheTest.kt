@@ -288,6 +288,78 @@ class CacheTest : FunSpec({
 
             store.backing.isEmpty() shouldBe true
         }
+
+        test("flushes dirty entries on eviction") {
+            val store = FakeCacheStore<String, String>()
+            val cache = cache<String, String> {
+                maxSize(2)
+                evictionStrategy(EvictionStrategyType.FIFO)
+                store(store)
+                writeStrategy(WriteStrategy.WRITE_BACK)
+                writeBack {
+                    flushInterval(100.seconds)
+                    batchSize(100)
+                }
+            }
+
+            cache.put("a", "1")
+            cache.put("b", "2")
+            store.backing.isEmpty() shouldBe true
+
+            cache.put("c", "3")
+
+            store.backing["a"] shouldBe "1"
+            store.backing.containsKey("b") shouldBe false
+            store.backing.containsKey("c") shouldBe false
+        }
+
+        test("flushes dirty entries on clear") {
+            val store = FakeCacheStore<String, String>()
+            val cache = cache<String, String> {
+                store(store)
+                writeStrategy(WriteStrategy.WRITE_BACK)
+                writeBack {
+                    flushInterval(100.seconds)
+                    batchSize(100)
+                }
+            }
+
+            cache.put("a", "1")
+            cache.put("b", "2")
+            store.backing.isEmpty() shouldBe true
+
+            cache.clear()
+
+            store.backing["a"] shouldBe "1"
+            store.backing["b"] shouldBe "2"
+            cache.size() shouldBe 0L
+        }
+
+        test("flushes dirty entries on expiration cleanup") {
+            val store = FakeCacheStore<String, String>()
+            val cache = cache<String, String> {
+                store(store)
+                writeStrategy(WriteStrategy.WRITE_BACK)
+                expireAfterWrite(50.milliseconds)
+                cleanupInterval(50.milliseconds)
+                writeBack {
+                    flushInterval(100.seconds)
+                    batchSize(100)
+                }
+            }
+
+            cache.put("k", "v")
+            store.backing.isEmpty() shouldBe true
+
+            withTimeout(2.seconds) {
+                while (!store.backing.containsKey("k")) {
+                    delay(20.milliseconds)
+                }
+            }
+
+            store.backing["k"] shouldBe "v"
+            cache.contains("k") shouldBe false
+        }
     }
 
     context("disposal") {

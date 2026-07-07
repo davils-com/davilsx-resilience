@@ -391,6 +391,10 @@ public class Cache<K, V> internal constructor(
         checkDisposal()
         val keysSnapshot = entries.keys()
 
+        if (data.writeStrategy == WriteStrategy.WRITE_BACK) {
+            flush()
+        }
+
         entries.clear()
         dirty.clear()
 
@@ -414,19 +418,8 @@ public class Cache<K, V> internal constructor(
         checkDisposal()
         if (data.writeStrategy != WriteStrategy.WRITE_BACK) return
 
-        val pending = dirty.entries().associate { it.key to it.value }
-        if (pending.isEmpty()) return
-
-        var flushedCount = 0
-        pending.forEach { (key, value) ->
-            if (executeStoreWrite(key, rethrow = false) { it.store(key, value) }) {
-                dirty.remove(key)
-                flushedCount++
-            }
-        }
-
+        val flushedCount = flushDirtyEntries(dirty.keys())
         if (flushedCount > 0) {
-            writeBackFlushedEntriesCount.addAndGet(flushedCount.toLong())
             eventBus.push(CacheEvent.CacheWriteBackFlushed(flushedCount))
         }
     }
@@ -484,6 +477,7 @@ public class Cache<K, V> internal constructor(
     }
 
     private suspend fun removeEntry(key: K) {
+        flushDirtyEntry(key)
         entries.remove(key)
         dirty.remove(key)
 
@@ -560,7 +554,7 @@ public class Cache<K, V> internal constructor(
             val snapshot = entries.entries().associate { it.key to it.value }
             val victim = data.evictionStrategy.selectVictim(snapshot) ?: break
             entries.remove(victim)
-            dirty.remove(victim)
+            flushDirtyEntry(victim)
             emitEviction(victim)
         }
     }
@@ -570,6 +564,38 @@ public class Cache<K, V> internal constructor(
         if (dirty.size() >= data.writeBackConfig.batchSize) {
             flush()
         }
+    }
+
+    private suspend fun flushDirtyEntries(keys: Iterable<K>): Int {
+        if (data.writeStrategy != WriteStrategy.WRITE_BACK) return 0
+
+        var flushedCount = 0
+        keys.forEach { key ->
+            if (flushDirtyEntry(key)) {
+                flushedCount++
+            }
+        }
+
+        return flushedCount
+    }
+
+    /**
+     * Flushes a single buffered write-back entry when present.
+     *
+     * @return `true` when a dirty entry was successfully written to the store.
+     */
+    private suspend fun flushDirtyEntry(key: K): Boolean {
+        if (data.writeStrategy != WriteStrategy.WRITE_BACK) return false
+
+        val value = dirty.get(key).getOrNull() ?: return false
+
+        if (!executeStoreWrite(key, rethrow = false) { it.store(key, value) }) {
+            return false
+        }
+
+        dirty.remove(key)
+        writeBackFlushedEntriesCount.incrementAndGet()
+        return true
     }
 
     private suspend fun persistValue(key: K, value: V) {
@@ -607,7 +633,7 @@ public class Cache<K, V> internal constructor(
         snapshot.forEach { (key, entry) ->
             if (entry.isExpired(data.expireAfterWrite, data.expireAfterAccess)) {
                 entries.remove(key)
-                dirty.remove(key)
+                flushDirtyEntry(key)
                 emitExpiration(key)
             }
         }
