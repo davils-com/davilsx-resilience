@@ -140,8 +140,178 @@ public class Cache<K, V> internal constructor(
      */
     public suspend fun put(key: K, value: V) {
         checkDisposal()
-        insert(key, value, persistToStore = true)
-        emitPut(key)
+        storeValue(key, value)
+    }
+
+    /**
+     * Atomically stores [value] under [key] only when no valid entry exists.
+     *
+     * Returns the existing value when present, or `null` when [value] was stored.
+     * Concurrent calls for the same key are coalesced under a per-key lock.
+     *
+     * @param key The key to store.
+     * @param value The value to store when absent.
+     * @return The previous value, or `null` if the key was absent.
+     * @since 1.0.0
+     */
+    public suspend fun putIfAbsent(key: K, value: V): V? {
+        checkDisposal()
+        lookupAndTouch(key)?.let { existing ->
+            emitHit(key)
+            return existing
+        }
+
+        return withKeyLock(key) {
+            checkDisposal()
+            lookupAndTouch(key)?.let { existing ->
+                emitHit(key)
+                return@withKeyLock existing
+            }
+
+            emitMiss(key)
+            storeValue(key, value)
+            null
+        }
+    }
+
+    /**
+     * Atomically computes and stores a value when no valid entry exists.
+     *
+     * Unlike [get] with a loader, this method does not read through the backing [CacheStore].
+     * The [mappingFunction] runs only when the in-memory cache has no valid entry.
+     * Concurrent calls for the same key coalesce so the mapping function runs at most once.
+     *
+     * @param key The key to look up.
+     * @param mappingFunction The suspendable function invoked when the key is absent.
+     * @return The existing or newly computed value.
+     * @since 1.0.0
+     */
+    public suspend fun computeIfAbsent(key: K, mappingFunction: suspend (K) -> V): V {
+        checkDisposal()
+        lookupAndTouch(key)?.let { existing ->
+            emitHit(key)
+            return existing
+        }
+
+        return withKeyLock(key) {
+            checkDisposal()
+            lookupAndTouch(key)?.let { existing ->
+                emitHit(key)
+                return@withKeyLock existing
+            }
+
+            emitMiss(key)
+            val value = mappingFunction(key)
+            storeValue(key, value)
+            value
+        }
+    }
+
+    /**
+     * Atomically computes a new value from the current entry, storing or removing it.
+     *
+     * The [remappingFunction] receives the key and the current value, or `null` when absent.
+     * When it returns `null`, a present entry is removed. When it returns a non-null value,
+     * that value is stored. Concurrent calls for the same key are serialized per key.
+     *
+     * @param key The key to compute.
+     * @param remappingFunction The suspendable remapping function.
+     * @return The newly stored value, or `null` when the entry was removed or remains absent.
+     * @since 1.0.0
+     */
+    public suspend fun compute(key: K, remappingFunction: suspend (K, V?) -> V?): V? {
+        checkDisposal()
+
+        return withKeyLock(key) {
+            checkDisposal()
+            val entry = lookupEntry(key)
+            val current = entry?.value
+            if (entry != null) {
+                emitHit(key)
+            } else {
+                emitMiss(key)
+            }
+
+            when (val newValue = remappingFunction(key, current)) {
+                null -> {
+                    if (entry != null) {
+                        removeEntry(key)
+                    }
+                    null
+                }
+                else -> {
+                    storeValue(key, newValue)
+                    newValue
+                }
+            }
+        }
+    }
+
+    /**
+     * Atomically replaces the value for [key] only when a valid entry exists.
+     *
+     * @param key The key to replace.
+     * @param value The new value.
+     * @return The previous value, or `null` when no valid entry existed.
+     * @since 1.0.0
+     */
+    public suspend fun replace(key: K, value: V): V? {
+        checkDisposal()
+
+        return withKeyLock(key) {
+            checkDisposal()
+            val entry = lookupEntry(key) ?: return@withKeyLock null
+            emitHit(key)
+            storeValue(key, value)
+            entry.value
+        }
+    }
+
+    /**
+     * Atomically replaces the value for [key] only when the current value equals [oldValue].
+     *
+     * @param key The key to replace.
+     * @param oldValue The expected current value.
+     * @param newValue The value to store when the expectation matches.
+     * @return `true` when the value was replaced, `false` otherwise.
+     * @since 1.0.0
+     */
+    public suspend fun replace(key: K, oldValue: V, newValue: V): Boolean {
+        checkDisposal()
+
+        return withKeyLock(key) {
+            checkDisposal()
+            val entry = lookupEntry(key) ?: return@withKeyLock false
+            if (entry.value != oldValue) return@withKeyLock false
+
+            emitHit(key)
+            storeValue(key, newValue)
+            true
+        }
+    }
+
+    /**
+     * Atomically stores [value] under [key] and returns the previous value.
+     *
+     * @param key The key to store.
+     * @param value The value to store.
+     * @return The previous value, or `null` when no valid entry existed.
+     * @since 1.0.0
+     */
+    public suspend fun getAndPut(key: K, value: V): V? {
+        checkDisposal()
+
+        return withKeyLock(key) {
+            checkDisposal()
+            val entry = lookupEntry(key)
+            if (entry != null) {
+                emitHit(key)
+            } else {
+                emitMiss(key)
+            }
+            storeValue(key, value)
+            entry?.value
+        }
     }
 
     /**
@@ -152,14 +322,7 @@ public class Cache<K, V> internal constructor(
      */
     public suspend fun remove(key: K) {
         checkDisposal()
-        entries.remove(key)
-        dirty.remove(key)
-
-        if (shouldMirrorRemovalsToStore()) {
-            persistRemoval(key)
-        }
-
-        emitRemove(key)
+        removeEntry(key)
     }
 
     /**
@@ -311,9 +474,24 @@ public class Cache<K, V> internal constructor(
 
         loader ?: return@withKeyLock null
         val value = loader(key)
+        storeValue(key, value)
+        return@withKeyLock value
+    }
+
+    private suspend fun storeValue(key: K, value: V) {
         insert(key, value, persistToStore = true)
         emitPut(key)
-        return@withKeyLock value
+    }
+
+    private suspend fun removeEntry(key: K) {
+        entries.remove(key)
+        dirty.remove(key)
+
+        if (shouldMirrorRemovalsToStore()) {
+            persistRemoval(key)
+        }
+
+        emitRemove(key)
     }
 
     private suspend fun lookupAndTouch(key: K): V? {

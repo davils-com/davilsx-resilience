@@ -89,6 +89,21 @@ val user = cache.get("user:42") { key ->
 
 On concurrent misses for the same key, loads are coalesced: one store load or loader runs; other waiters re-check the cache and receive the same result.
 
+### Atomic compute
+
+Per-key locking serializes concurrent compute calls for the same key. All methods emit hit/miss/put/remove events consistent with their outcome.
+
+| Method | Behavior |
+|--------|----------|
+| `putIfAbsent(key, value)` | Stores only when absent; returns existing value or `null` if stored |
+| `computeIfAbsent(key, mappingFunction)` | Maps only when absent in memory; **no** store read-through; coalesced per key |
+| `compute(key, remappingFunction)` | Remaps `(key, current?) -> new?`; `null` removes a present entry |
+| `replace(key, value)` | Replaces only when present; returns previous value or `null` |
+| `replace(key, oldValue, newValue)` | Replaces only when current value matches; returns `true`/`false` |
+| `getAndPut(key, value)` | Stores and returns previous value or `null` |
+
+Use `get(key, loader)` when a miss should read through the backing [CacheStore] before invoking a loader. Use `computeIfAbsent` for in-memory-only population under contention.
+
 ### Writes and maintenance
 
 | Method | Description |

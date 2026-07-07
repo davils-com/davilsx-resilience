@@ -483,4 +483,86 @@ class CacheTest : FunSpec({
             }
         }
     }
+
+    context("atomic compute operations") {
+        test("putIfAbsent stores only when absent") {
+            val cache = cache<String, String> { }
+
+            cache.putIfAbsent("k", "v1").shouldBeNull()
+            cache.get("k") shouldBe "v1"
+
+            cache.putIfAbsent("k", "v2") shouldBe "v1"
+            cache.get("k") shouldBe "v1"
+        }
+
+        test("computeIfAbsent maps only when absent and does not read the store") {
+            val store = FakeCacheStore(mutableMapOf("k" to "fromStore"))
+            val cache = cache<String, String> { store(store) }
+            var mappingCalls = 0
+
+            val value = cache.computeIfAbsent("k") {
+                mappingCalls++
+                "computed"
+            }
+
+            value shouldBe "computed"
+            mappingCalls shouldBe 1
+            store.loadCount shouldBe 0
+        }
+
+        test("compute updates or removes entries") {
+            val cache = cache<String, Int> { }
+
+            cache.compute("k") { _, _ -> 1 } shouldBe 1
+            cache.compute("k") { _, current -> current?.plus(1) } shouldBe 2
+            cache.compute("k") { _, _ -> null }.shouldBeNull()
+            cache.contains("k") shouldBe false
+        }
+
+        test("replace updates only existing entries") {
+            val cache = cache<String, String> { }
+
+            cache.replace("k", "v1").shouldBeNull()
+            cache.put("k", "old")
+            cache.replace("k", "new") shouldBe "old"
+            cache.get("k") shouldBe "new"
+        }
+
+        test("replace with expected value is conditional") {
+            val cache = cache<String, String> { }
+            cache.put("k", "old")
+
+            cache.replace("k", "wrong", "new") shouldBe false
+            cache.replace("k", "old", "new") shouldBe true
+            cache.get("k") shouldBe "new"
+        }
+
+        test("getAndPut returns the previous value") {
+            val cache = cache<String, String> { }
+
+            cache.getAndPut("k", "v1").shouldBeNull()
+            cache.getAndPut("k", "v2") shouldBe "v1"
+            cache.get("k") shouldBe "v2"
+        }
+
+        test("coalesces concurrent computeIfAbsent calls for the same key") {
+            val cache = cache<String, String> { }
+            var mappingCalls = 0
+
+            coroutineScope {
+                val results = (1..10).map {
+                    async {
+                        cache.computeIfAbsent("k") {
+                            mappingCalls++
+                            delay(50.milliseconds)
+                            "computed"
+                        }
+                    }
+                }.awaitAll()
+
+                results.distinct() shouldBe listOf("computed")
+                mappingCalls shouldBe 1
+            }
+        }
+    }
 })
