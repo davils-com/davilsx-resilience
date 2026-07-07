@@ -87,7 +87,7 @@ val user = cache.get("user:42") { key ->
 }
 ```
 
-On concurrent misses for the same key, multiple loads may occur; the last write wins.
+On concurrent misses for the same key, loads are coalesced: one store load or loader runs; other waiters re-check the cache and receive the same result.
 
 ### Writes and maintenance
 

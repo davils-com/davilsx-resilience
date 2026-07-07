@@ -7,10 +7,13 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -384,6 +387,100 @@ class CacheTest : FunSpec({
 
             value shouldBe "fromLoader"
             cache.getOrNull("k").shouldNotBeNull()
+        }
+    }
+
+    context("single-flight miss coalescing") {
+        test("coalesces concurrent loader calls for the same key") {
+            val cache = cache<String, String> { }
+            var loaderCalls = 0
+
+            coroutineScope {
+                val results = (1..10).map {
+                    async {
+                        cache.get("k") {
+                            loaderCalls++
+                            delay(50.milliseconds)
+                            "loaded"
+                        }
+                    }
+                }.awaitAll()
+
+                results.distinct() shouldBe listOf("loaded")
+                loaderCalls shouldBe 1
+            }
+        }
+
+        test("coalesces concurrent store loads for the same key") {
+            val store = FakeCacheStore(mutableMapOf("k" to "fromStore"))
+            val cache = cache<String, String> { store(store) }
+
+            coroutineScope {
+                val results = (1..10).map {
+                    async {
+                        delay(10.milliseconds)
+                        cache.get("k")
+                    }
+                }.awaitAll()
+
+                results shouldBe List(10) { "fromStore" }
+                store.loadCount shouldBe 1
+            }
+        }
+
+        test("does not coalesce loads for different keys") {
+            val store = FakeCacheStore<String, String>()
+            val cache = cache<String, String> { store(store) }
+
+            coroutineScope {
+                (1..5).map { index ->
+                    async { cache.get("k$index") }
+                }.awaitAll()
+
+                store.loadCount shouldBe 5
+            }
+        }
+
+        test("propagates loader exceptions to concurrent waiters") {
+            val cache = cache<String, String> { }
+
+            supervisorScope {
+                val deferreds = (1..5).map {
+                    async {
+                        cache.get("k") {
+                            delay(50.milliseconds)
+                            throw IllegalStateException("load failed")
+                        }
+                    }
+                }
+
+                deferreds.forEach { deferred ->
+                    shouldThrow<IllegalStateException> { deferred.await() }
+                }
+                cache.contains("k") shouldBe false
+            }
+        }
+
+        test("mixed get and get-with-loader coalesce when loader populates cache") {
+            val store = FakeCacheStore<String, String>()
+            val cache = cache<String, String> { store(store) }
+            var loaderCalls = 0
+
+            coroutineScope {
+                val fromLoader = async {
+                    cache.get("k") {
+                        loaderCalls++
+                        delay(50.milliseconds)
+                        "fromLoader"
+                    }
+                }
+                val fromStoreOnly = async { cache.get("k") }
+
+                fromLoader.await() shouldBe "fromLoader"
+                fromStoreOnly.await() shouldBe "fromLoader"
+                loaderCalls shouldBe 1
+                store.loadCount shouldBe 1
+            }
         }
     }
 })

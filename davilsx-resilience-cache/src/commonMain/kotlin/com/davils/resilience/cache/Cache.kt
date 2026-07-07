@@ -26,6 +26,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
 
@@ -63,6 +64,9 @@ public class Cache<K, V> internal constructor(
     private val writeBackFlushedEntriesCount = atomic(0L)
     private val clearCount = atomic(0L)
     private val maintenanceJobs = mutableListOf<Job>()
+    // ponytail: one Mutex per distinct missed key; bounded by keys ever loaded on miss
+    private val keyLocks: ConcurrentHashMap<K, Mutex> = concurrentHashMapOf()
+    private val keyLocksMutex = Mutex()
 
     init {
         if (data.cleanupInterval > Duration.ZERO) {
@@ -78,8 +82,8 @@ public class Cache<K, V> internal constructor(
      * Returns the value associated with the given [key], or `null` if no valid entry exists.
      *
      * This method emits [CacheEvent.CacheHit] and [CacheEvent.CacheMiss] events. If a backing
-     * [CacheStore] is configured, a cache miss triggers a read-through load outside the map lock.
-     * Concurrent misses for the same key may load more than once; the last write wins.
+     * [CacheStore] is configured, a cache miss triggers a read-through load. Concurrent misses
+     * for the same key are coalesced so at most one store load runs per key.
      *
      * @param key The key to look up.
      * @return The cached value, or `null` if no valid entry exists.
@@ -92,8 +96,7 @@ public class Cache<K, V> internal constructor(
             return value
         }
 
-        emitMiss(key)
-        return loadFromStore(key)
+        return resolveMiss(key)
     }
 
     /**
@@ -125,12 +128,7 @@ public class Cache<K, V> internal constructor(
             return value
         }
 
-        emitMiss(key)
-        loadFromStore(key)?.let { return it }
-
-        val value = loader(key)
-        put(key, value)
-        return value
+        return resolveMiss(key, loader)!!
     }
 
     /**
@@ -287,7 +285,35 @@ public class Cache<K, V> internal constructor(
 
         entries.clear()
         dirty.clear()
+        keyLocks.clear()
         super.dispose()
+    }
+
+    private suspend fun <T> withKeyLock(key: K, block: suspend () -> T): T {
+        val lock = keyLocksMutex.withLock {
+            keyLocks.get(key).getOrNull() ?: Mutex().also { keyLocks.put(key, it) }
+        }
+        return lock.withLock { block() }
+    }
+
+    private suspend fun resolveMiss(
+        key: K,
+        loader: (suspend (K) -> V)? = null,
+    ): V? = withKeyLock(key) {
+        checkDisposal()
+        lookupAndTouch(key)?.let { value ->
+            emitHit(key)
+            return@withKeyLock value
+        }
+
+        emitMiss(key)
+        loadFromStore(key)?.let { return@withKeyLock it }
+
+        loader ?: return@withKeyLock null
+        val value = loader(key)
+        insert(key, value, persistToStore = true)
+        emitPut(key)
+        return@withKeyLock value
     }
 
     private suspend fun lookupAndTouch(key: K): V? {
