@@ -3,7 +3,7 @@
 kotlin = "2.4.0"
 kreate = "1.3.1"
 kotest = "6.2.1"
-ksp = "2.3.9"
+ksp = "2.3.10"
 publish = "0.37.0"
 detekt = "2.0.0-alpha.5"
 android = "9.1.1"
